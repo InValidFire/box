@@ -1,23 +1,45 @@
-import os, sys
+import os
+import sys
 
 from pathlib import Path
 from itertools import product
 
 import backup as lib
+import argparse
+import shutil
+import hashlib
+import cmd
 
 
 def print_divider(symbol: str = "-"):
-	print(symbol * int(os.get_terminal_size().columns/len(symbol)))  # keeps it from overflowing
+    # keeps it from overflowing
+    print(symbol * int(os.get_terminal_size().columns/len(symbol)))
 
-def backup_main(args: list):  # TODO: rewrite to have prettier output.
-    """Create backups from the terminal."""
-    
-    output = {}
+
+def main():
+    parser = argparse.ArgumentParser(
+        description="Backup utility by InValidFire")
+    parser.add_argument("preset", type=str)
+    parser.add_argument("--restore", "-r", action="store_true")
+
+    args = parser.parse_args()
+
     try:
-        backup_data = lib.StorageRoot().get_file(".backup_data.json").read_json()
-        targets = backup_data[args[0]]['targets']
-        destinations = backup_data[args[0]]["destinations"]
-        output = {}
+        presets = lib.StorageRoot().get_file(".backup_data.json").read_json()
+    except FileNotFoundError:
+        print(".backup_data.json file not found.")
+        sys.exit(1)
+
+    try:
+        targets = presets[args.preset]['targets']
+        destinations = presets[args.preset]['destinations']
+    except KeyError:
+        print("Backup preset not found.")
+        sys.exit(2)
+
+    output = {}
+
+    if not args.restore:
         for target, destination in product(targets, destinations):
             if destination not in output:
                 output[destination] = {}
@@ -29,89 +51,67 @@ def backup_main(args: list):  # TODO: rewrite to have prettier output.
             try:
                 storage = lib.StorageRoot(Path(destination))
                 bm = lib.BackupManager(Path(target), storage=storage)
-                output[destination]["status"] = "found!"
+                output[destination]['status'] = "found!"
             except FileNotFoundError:
                 print(f"cannot find '{destination}'")
-                output[destination]["status"] = "failed to find destination."
+                output[destination]['status'] = "failed to find destination."
                 continue
             try:
                 bm.create_backup()
-                bm.delete_excess_backups(backup_data[args[0]]["max_count"])
+                bm.delete_excess_backups(presets[args.preset]['max_count'])
                 print(f"created backup to '{destination}'")
-                output[destination][target] = "backed up successfully!"
+                output[destination][target] = "backed up successful!"
             except FileExistsError:
                 print("this backup already exists, skipping.")
                 output[destination][target] = "backup already exists... skipped."
+            print_divider()
+            for destination in output:
+                print(
+                    f"{Path(destination).stem} - {output[destination]['status']}")
+                for target in output[destination]:
+                    if target == "status":
+                        continue
+                    print(f"\t{Path(target).stem}")
+                    print(f"\t\t{output[destination][target]}")
+    else:
+        # load backup choices into a list
+        choices = []
+        hashes = []
+        for target, destination in product(targets, destinations):
+            print(
+                f"reading '{Path(target).name}' backups from '{destination}'")
+            try:
+                storage = lib.StorageRoot(Path(destination))
+                bm = lib.BackupManager(Path(target), storage=storage)
+            except FileNotFoundError:
+                print(f"cannot find {destination}")
+                continue
+            for backup in bm.get_backups():
+                md5_hash = hashlib.md5(backup.path.read_bytes()).hexdigest()
+                if md5_hash not in hashes:
+                    hashes.append(hashlib.md5(
+                        backup.path.read_bytes()).hexdigest())
+                    choices.append({"backup": backup, "date": bm.get_backup_date(
+                        backup), "bm": bm, "hash": hashlib.md5(backup.path.read_bytes()).hexdigest()})
+        choices.sort(key=lambda x: x["date"])
+        choices.reverse()
+
+        # print choices
         print_divider()
-        for i, destination in enumerate(output):
-            print(f"{Path(destination).stem} - {output[destination]['status']}")
-            for target in output[destination]:
-                if target == "status":
-                    continue
-                print(f"\t{Path(target).stem}")
-                print(f"\t\t{output[destination][target]}")
-    # except IndexError:
-    #     print("Please indicate which backup preset to run.")
-    except KeyError:
-        print("Backup preset not found.")
-    except FileNotFoundError:
-        print("'.backup_data.json' file not found.")
-    # except BaseException as e:
-    #     print("Error loading data.")
+        print("Available Backups: (CTRL-C to cancel)")
+        for i, choice in enumerate(choices):
+            items = [f"{i}.", choice["backup"].path.name.split(choice["bm"].separator)[
+                0], f"[{choice['hash']}]", f"{str(choice['date'])}"]
+            # this method is undocumented.
+            cmd.Cmd().columnize(items, displaywidth=shutil.get_terminal_size().columns)
 
-def restore_main(args: list):
-    """Restore backups from the terminal."""
-    from pathlib import Path
-    from itertools import product
-    import hashlib, cmd, shutil
-
-    # load data from JSON
-    try:
-        backup_data = lib.StorageRoot().get_file(".backup_data.json").read_json()
-    except FileNotFoundError:
-        print("'.backup_data.json' file not found.")
-        return
-    try:
-        targets = backup_data[args[0]]['targets']
-    except KeyError:
-        print("Backup preset not found.")
-        return
-    except IndexError:
-        print("Please indicate which backup preset to run.")
-    destinations = backup_data[args[0]]["destinations"]
-
-    # load backup choices into a list
-    choices = []
-    hashes = []
-    for target, destination in product(targets, destinations):
-        print(f"reading '{Path(target).name}' backups from '{destination}'")
+        #  restore chosen backup
         try:
-            storage = lib.StorageRoot(Path(destination))
-            bm = lib.BackupManager(Path(target), storage=storage)
-        except FileNotFoundError:
-            print(f"cannot find {destination}")
-            continue
-        for backup in bm.get_backups():
-            md5_hash = hashlib.md5(backup.path.read_bytes()).hexdigest()
-            if md5_hash not in hashes:
-                hashes.append(hashlib.md5(backup.path.read_bytes()).hexdigest())
-                choices.append({"backup": backup, "date": bm.get_backup_date(backup), "bm": bm, "hash": hashlib.md5(backup.path.read_bytes()).hexdigest()})
-    choices.sort(key=lambda x: x["date"])
-    choices.reverse()
-    
-    # print choices
-    print_divider()
-    print("Available Backups: (CTRL-C to cancel)")
-    for i, choice in enumerate(choices):
-        items = [f"{i}.", choice["backup"].path.name.split(choice["bm"].separator)[0], f"[{choice['hash']}]", f"{str(choice['date'])}"]
-        cmd.Cmd().columnize(items, displaywidth=shutil.get_terminal_size().columns)  # this method is undocumented.
+            choice = int(input("Which backup would you like to restore? "))
+            choices[choice]['bm'].restore_backup(choices[choice]['backup'])
+        except KeyboardInterrupt:
+            print("\nAborting!")
 
-    #  restore chosen backup
-    try:
-        choice = int(input("Which backup would you like to restore? "))
-        choices[choice]['bm'].restore_backup(choices[choice]['backup'])
-    except KeyboardInterrupt:
-        print("\nAborting!")
 
 if __name__ == "__main__":
-    backup_main(sys.argv[1:])
+    main()
