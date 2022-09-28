@@ -11,7 +11,6 @@ from abc import ABC, abstractmethod
 from collections.abc import Generator
 
 import json
-import warnings
 from pathlib import Path
 import shutil
 from zipfile import ZipFile
@@ -160,18 +159,6 @@ class StorageFile(StorageBase):
     """A file located within the Storage system."""
     def delete(self):
         self.path.unlink()
-
-    def read(self) -> dict:
-        """Read the file's JSON format to a dictionary structure."""
-        warnings.warn("this method is deprecated... use read_json instead.", DeprecationWarning)
-        if not self.path.exists():
-            return {}
-        if self.path.suffix == ".json":
-            with self.path.open("r+", encoding="utf-8") as f:
-                data = json.load(f)
-                return data
-        else:
-            raise ValueError("File is not in JSON format.")
     
     def read_json(self) -> dict:
         """If the file is a json file, read its data to a dictionary structure and return it."""
