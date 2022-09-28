@@ -16,7 +16,8 @@ Here's an example of my current .backup_data.json:
             "C:\\Users\\InValidFire\\AppData\\Roaming\\.minecraft\\saves\\building_world"
         ],
         "destinations": [
-            "C:\\Users\\InValidFire\\.storage\\backups"
+            "C:\\Users\\InValidFire\\.storage\\backups",
+            "D:\\backups
         ],
         "max_count": 3
     }
@@ -31,8 +32,20 @@ max_count - the maximum count of backups to store. (oldest gets deleted after th
 
 # Usage
 
-Simply run main.py with the key of which backup to run. For example:
+## Backup
+
+Simply run main.py with the preset of which backup to run. For example:
 
 `python main.py minecraft`
+
+Running this command will add every file found in the target directory to a zip, and place that zip in each of the destinations.
+
+## Restore
+
+If you wish to restore a backup add a `-r` or `--restore` flag:
+
+`python main.py minecraft -r`
+
+It will list the choices in all accessible backup locations for you to choose from, and restore your chosen backup.
 
 This can of course be aliased.
