@@ -4,7 +4,7 @@ import sys
 from pathlib import Path
 from itertools import product
 
-import backup as lib
+import backup_manager as lib
 import argparse
 import shutil
 import hashlib
