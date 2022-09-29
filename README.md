@@ -17,7 +17,7 @@ Here's an example of my current .backup_data.json:
         ],
         "destinations": [
             "C:\\Users\\InValidFire\\.storage\\backups",
-            "D:\\backups
+            "D:\\backups"
         ],
         "max_count": 3
     }
