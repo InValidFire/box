@@ -22,7 +22,7 @@ def print_divider(symbol: str = "-"):
     print(symbol * int(os.get_terminal_size().columns/len(symbol)))
 
 
-def backup(targets: list[str], destinations: list[str]):
+def backup(targets: list[str], destinations: list[str], force=True, keep=False):
     output = {}
     for target, destination in product(targets, destinations):
         if destination['path'] not in output:
@@ -41,8 +41,9 @@ def backup(targets: list[str], destinations: list[str]):
             output[destination['path']]['status'] = "failed to find destination."
             continue
         try:
-            bm.create_backup()
-            bm.delete_excess_backups(destination['max_count'])
+            bm.create_backup(force=force)
+            if not keep:
+                bm.delete_excess_backups(destination['max_count'])
             print(f"created backup to '{destination['path']}'")
             output[destination['path']][target] = "backed up successful!"
         except FileExistsError:
@@ -122,11 +123,17 @@ def main():
                         help="switch to restore a backup")
     parser.add_argument("--version", "-v", action="version",
                         version=f"{parser.prog} {VERSION} by InValidFire", help="print version information and exit")
+    parser.add_argument("--force", "-f", action="store_true",
+                        help="force backup creation even if it's already saved")
+    parser.add_argument("--keep", "-k", action="store_true",
+                        help="keep old backups beyond the max_count value")
+    parser.add_argument("--config", type=Path, default=Path.home().joinpath(".storage").joinpath(".backup_data.json"), help="specify a custom path for the configuration file.")
 
     args = parser.parse_args()
 
     try:
-        config_file = Path.home().joinpath(".storage").joinpath(".backup_data.json")
+        config_file = args.config
+        print(f"reading config file '{config_file}'")
         with config_file.open("r+") as fp:
             presets = json.load(fp)
     except FileNotFoundError:
@@ -147,7 +154,7 @@ def main():
         sys.exit(3)
 
     if not args.restore:
-        backup(targets, destinations)
+        backup(targets, destinations, force=args.force, keep=args.keep)
     else:
         restore(targets, destinations)
 
