@@ -29,11 +29,13 @@ Here's an example of my current .backup_data.json:
 }
 ```
 preset:
-    targets (list) - the target directories to backup
+targets (list) - the target directories to backup
 
-    destinations (list)
-        path (str) - the destination to copy the target(s) to.
-        max_count (int) - the maximum count of backups to store. (oldest gets deleted after this many backups are made)
+destinations (list)
+
+path (str) - the destination to copy the target(s) to.
+
+max_count (int) - the maximum count of backups to store. (oldest gets deleted after this many backups are made)
 
 # Usage
 

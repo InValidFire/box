@@ -10,8 +10,6 @@ from datetime import datetime
 from pathlib import Path
 from zipfile import ZipFile
 
-from storage import StorageRoot, StorageFolder, StorageFile
-
 __all__ = ["BackupManager"]
 
 class BackupManager:
@@ -27,17 +25,12 @@ class BackupManager:
     - get_delete_candidates()
     - delete_excess_backups()
     """
-    def __init__(self, target: Path, date_format: str = "%d_%m_%y__%H%M%S", separator: str = "-",
-                 storage: StorageFolder | None = None) -> None:
+    def __init__(self, target: Path, storage: Path, date_format: str = "%d_%m_%y__%H%M%S", separator: str = "-") -> None:
         self.target_path = target ## this is a folder. :)
         self.storage = storage
         self.date_format = date_format
         self.separator = separator
-        if self.storage is None:
-            try:
-                self.storage = StorageRoot().get_folder("backups")
-            except FileExistsError:
-                self.storage = StorageRoot().create_folder("backups")
+        self.storage.mkdir(exist_ok=True, parents=True)
 
     def __str__(self):
         return f"BackupManager[target={self.target_path}, storage={self.storage}]"
@@ -45,14 +38,14 @@ class BackupManager:
     @property
     def target_path(self) -> Path:
         """
-        Target to create backups of. This could be a file or folder.
+        Target to create backups of. This should be a folder.
         """
         return self._target_path
 
     @target_path.setter
     def target_path(self, new_path: Path):
         if isinstance(new_path, Path):
-            if new_path.exists() and (new_path.is_dir() or new_path.is_file()):
+            if new_path.exists() and new_path.is_dir():
                 self._target_path = new_path
             else:
                 raise ValueError(new_path)
@@ -60,15 +53,15 @@ class BackupManager:
             raise TypeError(new_path)
 
     @property
-    def storage(self) -> StorageFolder:
+    def storage(self) -> Path:
         """
         Storage object to store created backups in.
         """
         return self._storage
 
     @storage.setter
-    def storage(self, new_storage: StorageFolder):
-        if isinstance(new_storage, StorageFolder):
+    def storage(self, new_storage: Path):
+        if new_storage.is_dir():
             self._storage = new_storage
         else:
             raise TypeError(new_storage)
@@ -102,7 +95,7 @@ class BackupManager:
 
     def create_backup(self, force=False):
         """
-        Create a backup of the target path, stored in the backup storage folder.
+        Create a backup of the target folder, stored in the backup storage folder.
 
         The backup is deleted if the MD5 hash of the new backup matches the latest backup.
         Use force=True to force-create a backup and skip MD5 hash checking.
@@ -110,25 +103,25 @@ class BackupManager:
         date_string = datetime.now().strftime(self.date_format)
         latest_backup = self.get_latest_backup()
         new_backup_name = f"{self.target_path.name}{self.separator}{date_string}.zip"
-        new_backup_path = self.storage.path.joinpath(new_backup_name)
+        new_backup_path = self.storage.joinpath(new_backup_name)
         with ZipFile(new_backup_path, mode="w") as zip_file:
             for item in self.target_path.glob("**/*"):
                 zip_file.write(item, item.relative_to(self.target_path))
         if not force and latest_backup is not None:
             new_hash = hashlib.md5(new_backup_path.read_bytes()).hexdigest()
-            latest_hash = hashlib.md5(latest_backup.path.read_bytes()).hexdigest()
+            latest_hash = hashlib.md5(latest_backup.read_bytes()).hexdigest()
             if latest_hash == new_hash:
                 new_backup_path.unlink()
-                raise FileExistsError(f"This backup matches '{latest_backup.path.name}'")
+                raise FileExistsError(f"This backup matches '{latest_backup.name}'")
 
-    def get_backup_date(self, backup: StorageFile | StorageFolder) -> datetime:
+    def get_backup_date(self, backup: Path) -> datetime:
         """
         Turns the datetime string in the file name into a datetime object.
         """
-        date_string = backup.path.name.split(self.separator)[1].replace(backup.path.suffix, "")
+        date_string = backup.name.split(self.separator)[1].replace(backup.suffix, "")
         return datetime.strptime(date_string, self.date_format)
 
-    def get_latest_backup(self) -> StorageFile | StorageFolder | None:
+    def get_latest_backup(self) -> Path | None:
         """
         Get the latest backup.
         """
@@ -138,7 +131,7 @@ class BackupManager:
         else:
             return self.get_backups()[-1]
 
-    def get_backups(self) -> list[StorageFolder | StorageFile]:
+    def get_backups(self) -> list[Path]:
         """
         Get all backups found in the given folder, sorted oldest to newest.
         """
@@ -146,7 +139,7 @@ class BackupManager:
         backups.sort(key=self.get_backup_date)
         return backups
 
-    def get_delete_candidates(self, max_backup_count: int) -> list[StorageFile | StorageFolder]:
+    def get_delete_candidates(self, max_backup_count: int) -> list[Path]:
         """
         Get all candidates for deletion with the given max_backup_count.
         If none are available for deletion, returns None.
@@ -159,16 +152,24 @@ class BackupManager:
     def delete_excess_backups(self, max_backup_count: int):
         """Delete all excess backups"""
         for file in self.get_delete_candidates(max_backup_count):
-            file.delete()
+            file.unlink()
 
-    def restore_backup(self, backup: StorageFile):
+    def empty_dir(self, path: Path):
+        """Deletes all files and folders inside the given directory.
+        If the given path is not a directory, it will raise a TypeError."""
+        if not path.is_dir():
+            raise TypeError(path)
+        for item in path.iterdir():
+            if item.is_dir():
+                self.empty_dir(item)
+            if item.is_file():
+                print(f"deleting '{item}'")
+                item.unlink()
+
+    def restore_backup(self, backup: Path):
         """Restore to the given backup"""
-        target = StorageRoot(self.target_path)
-        for folder in target.get_folders():
-            folder.delete()
-            print(f"deleting '{folder.path}'")
-        for file in target.get_files():
-            file.delete()
+        target = Path(self.target_path)
+        self.empty_dir(target)
         backup_zip = backup.read_zip()
-        backup_zip.extractall(target.path)
-        print(f"extracting '{backup_zip.filename}' to '{target.path}'")
+        backup_zip.extractall(target)
+        print(f"extracting '{backup_zip.filename}' to '{target}'")
