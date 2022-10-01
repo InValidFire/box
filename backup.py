@@ -10,6 +10,12 @@ import shutil
 import hashlib
 import cmd
 
+MAJOR = 0
+MINOR = 2
+PATCH = 0
+
+VERSION = ".".join([str(x) for x in [MAJOR, MINOR, PATCH]])
+
 
 def print_divider(symbol: str = "-"):
     print(symbol * int(os.get_terminal_size().columns/len(symbol)))
@@ -108,9 +114,13 @@ def main():
     #   4 - backup restoration aborted
 
     parser = argparse.ArgumentParser(
-        description="Backup utility by InValidFire")
-    parser.add_argument("preset", type=str)
-    parser.add_argument("--restore", "-r", action="store_true")
+        description="Backup utility by InValidFire", prog="backup_cmd", )
+    parser.add_argument("preset", type=str,
+                        help="specifies which backup preset to run")
+    parser.add_argument("--restore", "-r", action="store_true",
+                        help="switch to restore a backup")
+    parser.add_argument("--version", "-v", action="version",
+                        version=f"{parser.prog} {VERSION} by InValidFire", help="print version information and exit")
 
     args = parser.parse_args()
 
