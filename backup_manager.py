@@ -63,6 +63,8 @@ class BackupManager:
     def storage(self, new_storage: Path):
         if new_storage.is_dir():
             self._storage = new_storage
+        elif not new_storage.exists():
+            raise FileNotFoundError
         else:
             raise TypeError(new_storage)
 
