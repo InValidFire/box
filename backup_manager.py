@@ -172,6 +172,6 @@ class BackupManager:
         """Restore to the given backup"""
         target = Path(self.target_path)
         self.empty_dir(target)
-        backup_zip = backup.read_zip()
+        backup_zip = ZipFile(backup)
         backup_zip.extractall(target)
         print(f"extracting '{backup_zip.filename}' to '{target}'")
