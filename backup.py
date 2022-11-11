@@ -23,7 +23,7 @@ def print_divider(symbol: str = "-"):
 
 
 def backup(targets: list[str], destinations: list[str], force=True, keep=False):
-    output = {}
+    output = {}  # holds data used in printing output to the user.
     for target, destination in product(targets, destinations):
         if destination['path'] not in output:
             output[destination['path']] = {}
@@ -33,8 +33,8 @@ def backup(targets: list[str], destinations: list[str], force=True, keep=False):
             continue
         print(f"backing up '{target}'")
         try:
-            storage = Path(destination['path'])
-            bm = lib.BackupManager(Path(target), storage)
+            storage_folder = Path(destination['path'])
+            bm = lib.BackupManager(Path(target), storage_folder)
             output[destination['path']]['status'] = "found!"
         except FileNotFoundError:
             print(f"cannot find '{destination['path']}'")

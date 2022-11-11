@@ -24,16 +24,22 @@ class BackupManager:
     - get_latest_backup()
     - get_delete_candidates()
     - delete_excess_backups()
+
+    Args:
+    - target (Path) - the target folder to backup.
+    - storage_folder (Path) - the folder where backups will be stored.
+    - date_format (str) [Optional] - the date format used in the filename of the backup.
+    - separator (str) [Optional] - character that separates the backup name from the backup date.
     """
-    def __init__(self, target: Path, storage: Path, date_format: str = "%d_%m_%y__%H%M%S", separator: str = "-") -> None:
+    def __init__(self, target: Path, storage_folder: Path, date_format: str = "%d_%m_%y__%H%M%S", separator: str = "-") -> None:
         self.target_path = target ## this is a folder. :)
-        self.storage = storage
+        self.storage_folder = storage_folder 
         self.date_format = date_format
         self.separator = separator
-        self.storage.mkdir(exist_ok=True, parents=True)
+        self.storage_folder.mkdir(exist_ok=True, parents=True)
 
     def __str__(self):
-        return f"BackupManager[target={self.target_path}, storage={self.storage}]"
+        return f"BackupManager[target={self.target_path}, storage={self.storage_folder}]"
 
     @property
     def target_path(self) -> Path:
@@ -53,14 +59,14 @@ class BackupManager:
             raise TypeError(new_path)
 
     @property
-    def storage(self) -> Path:
+    def storage_folder(self) -> Path:
         """
         Storage object to store created backups in.
         """
         return self._storage
 
-    @storage.setter
-    def storage(self, new_storage: Path):
+    @storage_folder.setter
+    def storage_folder(self, new_storage: Path):
         if new_storage.is_dir():
             self._storage = new_storage
         elif not new_storage.exists():
@@ -105,7 +111,7 @@ class BackupManager:
         date_string = datetime.now().strftime(self.date_format)
         latest_backup = self.get_latest_backup()
         new_backup_name = f"{self.target_path.name}{self.separator}{date_string}.zip"
-        new_backup_path = self.storage.joinpath(new_backup_name)
+        new_backup_path = self.storage_folder.joinpath(new_backup_name)
         with ZipFile(new_backup_path, mode="w") as zip_file:
             for item in self.target_path.glob("**/*"):
                 zip_file.write(item, item.relative_to(self.target_path))
@@ -137,7 +143,7 @@ class BackupManager:
         """
         Get all backups found in the given folder, sorted oldest to newest.
         """
-        backups = list(self.storage.glob(f"{self.target_path.stem}{self.separator}*.zip"))
+        backups = list(self.storage_folder.glob(f"{self.target_path.stem}{self.separator}*.zip"))
         backups.sort(key=self.get_backup_date)
         return backups
 
