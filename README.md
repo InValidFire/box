@@ -10,24 +10,24 @@ YABU stands for "Yet Another Backup Utility"
 YABU loads a file in your HOME directory called `.yabu_config.json`, it should have the following structure:
 ```json
 {
-    "minecraft": {
-        "targets": [
-            "C:\\Users\\InValidFire\\AppData\\Roaming\\.minecraft\\saves\\main_world",
-            "C:\\Users\\InValidFire\\AppData\\Roaming\\.minecraft\\saves\\building_world"
-        ],
-        "destinations": [
-            {
-                "path": "C:\\Users\\InValidFire\\.storage\\backups",
-                "max_backup_count": 3,
-                "file_format": "zip"
-            },
-            {
-                "path": "D:\\backups",
-                "max_backup_count": 10,
-                "file_format": "zip"
-            }
-        ]
-    }
+	"minecraft": {
+		"targets": [
+			"C:\\Users\\InValidFire\\AppData\\Roaming\\.minecraft\\saves\\main_world",
+			"C:\\Users\\InValidFire\\AppData\\Roaming\\.minecraft\\saves\\building_world"
+		],
+		"destinations": [
+			{
+				"path": "C:\\Users\\InValidFire\\.storage\\backups",
+				"max_backup_count": 3,
+				"file_format": "zip"
+			},
+			{
+				"path": "D:\\backups",
+				"max_backup_count": 10,
+				"file_format": "zip"
+			}
+		]
+	}
 }
 ```
 This can be validated with the following JSON Schema:
@@ -108,7 +108,7 @@ This can be validated with the following JSON Schema:
 3. backup presets will store the paths of target directories & files, as well as the paths of destination directories.
 	1. each backup target will have a backup created and stored in each destination, allowing for backups to multiple locations.
 4. keep a backlog of past backups, the amount customizable to each destination.
-5. backup presets will allow the user to select a supported file format for the backup, customizable to each destination. 
+5. backup presets will allow the user to select a supported file format for the backup, customizable to each destination.
 
 ### Backups
 0. backups are to be stored in universal compressed formats, such as .zip, 7z, or .tar.
