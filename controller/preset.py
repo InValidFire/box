@@ -1,14 +1,35 @@
 from pathlib import Path
 
+from .destination import Destination
 from .backup import Backup
 
+__all__ = ['Preset']
+
 class Preset:
-    def __init__(self, name: str, date_format: str = "%d_%m_%y__%H%M%S", separator: str = "-"):
-        self._targets: list[Path] = []
-        self._destinations: list[Path] = []
+    def __init__(self, name: str):
+        self.targets: list[Path] = []
+        self.destinations: list[Destination] = []
         self.name = name
-        self.date_format = date_format
-        self.separator = separator
+
+    def __str__(self) -> str:
+        output = self.name
+        output += "Targets:" + '\n\t\t- '.join([str(x) for x in self.targets])
+        output += "Destinations:" + '\n\t\t- '.join([str(x) for x in self.destinations])
+        return output
+
+    def __eq__(self, other_preset) -> bool:
+        if isinstance(other_preset, Preset):
+            if self.destinations != other_preset.destinations:
+                return False
+            if self.targets != other_preset.targets:
+                return False
+            if self.name != other_preset.name:
+                return False
+        return True
+
+    def to_dict(self) -> dict:
+        output = {}
+        
 
     @property
     def name(self) -> str:
@@ -19,41 +40,7 @@ class Preset:
         if not isinstance(new_name, str):
             raise TypeError(new_name)
         else:
-            self.name = new_name
-
-    @property
-    def date_format(self) -> str:
-        return self._date_format
-
-    @date_format.setter
-    def date_format(self, new_date_format: str):
-        if not isinstance(new_date_format, str):
-            raise TypeError(new_date_format)
-        else:
-            self._date_format = new_date_format
-
-    @property
-    def separator(self) -> str:
-        return self._separator
-
-    @separator.setter
-    def separator(self, new_separator):
-        if not isinstance(new_separator, str):
-            raise TypeError(new_separator)
-        else:
-            self._separator = new_separator
-
-    def add_target(self, target_path: Path) -> None:
-        raise NotImplementedError
-
-    def add_destination(self, destination_path: Path) -> None:
-        raise NotImplementedError
-
-    def remove_target(self, target_path: Path) -> None:
-        raise NotImplementedError
-
-    def remove_destination(self, destination_path: Path) -> None:
-        raise NotImplementedError
+            self._name = new_name
 
     def create_backup(self) -> Backup:
         raise NotImplementedError

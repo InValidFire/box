@@ -10,6 +10,7 @@ YABU stands for "Yet Another Backup Utility"
 YABU loads a file in your HOME directory called `.yabu_config.json`, it should have the following structure:
 ```json
 {
+	"format": 1,
 	"minecraft": {
 		"targets": [
 			"C:\\Users\\InValidFire\\AppData\\Roaming\\.minecraft\\saves\\main_world",
@@ -28,71 +29,6 @@ YABU loads a file in your HOME directory called `.yabu_config.json`, it should h
 			}
 		]
 	}
-}
-```
-This can be validated with the following JSON Schema:
-```json
-{
-    "$schema": "http://json-schema.org/draft-06/schema#",
-    "$ref": "#/definitions/Root",
-    "definitions": {
-        "Root": {
-            "type": "object",
-            "additionalProperties": false,
-            "patternProperties": {
-                "^[a-zA-Z0-9_]+$": {
-                    "$ref": "#/definitions/Preset"
-                }
-            },
-            "minProperties": 1,
-            "title": "Welcome4"
-        },
-        "Preset": {
-            "type": "object",
-            "additionalProperties": false,
-            "properties": {
-                "targets": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    },
-                    "minItems": 1
-                },
-                "destinations": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/Destination"
-                    }
-                }
-            },
-            "required": [
-                "destinations",
-                "targets"
-            ],
-            "title": "Minecraft"
-        },
-        "Destination": {
-            "type": "object",
-            "additionalProperties": false,
-            "properties": {
-                "path": {
-                    "type": "string"
-                },
-                "max_backup_count": {
-                    "type": "integer"
-                },
-                "file_format": {
-                    "type": "string"
-                }
-            },
-            "required": [
-                "max_backup_count",
-                "path",
-                "file_format"
-            ],
-            "title": "Destination"
-        }
-    }
 }
 ```
 ## Requirements
@@ -129,6 +65,7 @@ This can be validated with the following JSON Schema:
 classDiagram
 	class PresetManager {
 		-Path _file_path
+		-int format_version
 		+__init__(Path file_path) None
 		+get_presets() List~Preset~
 		+get_preset(str name) Preset

@@ -3,6 +3,8 @@ from pathlib import Path
 from .preset import Preset
 from .backup import Backup
 
+__all__ = ['CommandHandler']
+
 class CommandHandler:
     def list_presets(self, config_path: Path) -> list[Preset]:
         raise NotImplementedError

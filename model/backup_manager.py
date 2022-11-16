@@ -1,6 +1,9 @@
 from pathlib import Path
 
-from ..controller import Backup, Preset
+from ..controller.backup import Backup
+from ..controller.preset import Preset
+
+__all__ = ['BackupManager']
 
 class BackupManager:
     def __new__(cls):
