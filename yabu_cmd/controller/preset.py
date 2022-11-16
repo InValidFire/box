@@ -1,4 +1,5 @@
 from pathlib import Path
+from datetime import datetime
 
 from .destination import Destination
 from .backup import Backup
@@ -13,8 +14,16 @@ class Preset:
 
     def __str__(self) -> str:
         output = self.name
-        output += "Targets:" + '\n\t\t- '.join([str(x) for x in self._targets])
-        output += "Destinations:" + '\n\t\t- '.join([str(x) for x in self._destinations])
+        output += "\n\tTargets:"
+        for target in self._targets:
+            output += f"\n\t\t - {target}"
+        output += "\n\tDestinations:"
+        for destination in self._destinations: 
+            output += f"\n\t\t- {destination.path}"
+            output += f"\n\t\t\tFile Format: {destination.file_format}"
+            output += f"\n\t\t\tMax Backup Count: {destination.max_backup_count}"
+            output += f"\n\t\t\tDate Format: {destination.date_format} [{datetime.strftime(datetime.now(), destination.date_format)}]"
+            output += f"\n\t\t\tName Separator: {destination.name_separator}"
         return output
 
     def __eq__(self, other_preset) -> bool:
