@@ -1,10 +1,22 @@
 from pathlib import Path
 import click
 
+from yabu_cmd.controller import CommandHandler
+
 @click.group()
-@click.option("--config", "-c", default=Path.home())
-def cli():
+@click.option("--config", "-c", default=Path.home().joinpath(".yabu_presets.json"))
+@click.pass_context
+def cli(ctx: click.Context, config):
+    ctx.ensure_object(dict)
+    ctx.obj['config'] = config
     pass
+
+@cli.command()
+@click.pass_obj
+def list(obj):
+    handler = CommandHandler(obj['config'])
+    print(handler.list_presets())
+
 
 @cli.command()
 @click.option("--force", "-f", default=False)
@@ -22,3 +34,6 @@ def restore(preset):
 @click.argument("preset")
 def modify(preset):
     print(f"modifying the preset '{preset}'")
+
+if __name__ == "__main__":
+    cli()
