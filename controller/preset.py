@@ -7,29 +7,25 @@ __all__ = ['Preset']
 
 class Preset:
     def __init__(self, name: str):
-        self.targets: list[Path] = []
-        self.destinations: list[Destination] = []
+        self._targets: list[Path] = []
+        self._destinations: list[Destination] = []
         self.name = name
 
     def __str__(self) -> str:
         output = self.name
-        output += "Targets:" + '\n\t\t- '.join([str(x) for x in self.targets])
-        output += "Destinations:" + '\n\t\t- '.join([str(x) for x in self.destinations])
+        output += "Targets:" + '\n\t\t- '.join([str(x) for x in self._targets])
+        output += "Destinations:" + '\n\t\t- '.join([str(x) for x in self._destinations])
         return output
 
     def __eq__(self, other_preset) -> bool:
         if isinstance(other_preset, Preset):
-            if self.destinations != other_preset.destinations:
+            if self._destinations != other_preset._destinations:
                 return False
-            if self.targets != other_preset.targets:
+            if self._targets != other_preset._targets:
                 return False
             if self.name != other_preset.name:
                 return False
         return True
-
-    def to_dict(self) -> dict:
-        output = {}
-        
 
     @property
     def name(self) -> str:
@@ -41,6 +37,24 @@ class Preset:
             raise TypeError(new_name)
         else:
             self._name = new_name
+
+    def add_target(self, target: Path):
+        if isinstance(target, Path):
+            self._targets.append(target)
+        else:
+            raise TypeError
+
+    def add_destination(self, destination: Destination):
+        if isinstance(destination, Destination):
+            self._destinations.append(destination)
+        else:
+            raise TypeError(destination)
+
+    def remove_target(self, target: Path):
+        self._targets.remove(target)
+
+    def remove_destination(self, destination: Destination):
+        self._destinations.remove(destination)
 
     def create_backup(self) -> Backup:
         raise NotImplementedError
