@@ -223,7 +223,7 @@ class PresetManager:
         Returns:
             list[Preset]: a list of presets.
         """
-        return self._presets.values()
+        return list(self._presets.values())
 
     def get_preset(self, name: str) -> Preset:
         """Get a single preset.
