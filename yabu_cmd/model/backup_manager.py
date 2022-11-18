@@ -192,20 +192,18 @@ class BackupManager:
             keep (bool, optional): Disable backup rotation. Defaults to False.
 
         Raises:
-            FileNotFoundError: If the target cannot be found. Will be removed at a later date.
-            FileNotFoundError: If the destination cannot be found. Will be removed at a later date.
             UnsupportedFormatException: If the destination's file_format is unknown.
             FileExistsError: If the backup's content exactly matches the previous backup. The backup will be deleted to save space.
 
         Yields:
             Generator[Backup, None, None]: yields a `Backup` object.
         """
-        for target, destination in product(preset._targets, preset._destinations):  # TODO: Allow this to safely skip non-existant targets & paths.
+        for target, destination in product(preset._targets, preset._destinations):
             latest_backup = self.get_latest_backup(destination, target)
-            if not target.exists():
-                raise FileNotFoundError(target)
-            if not destination.path.exists():
-                raise FileNotFoundError(destination.path)
+            if not target.exists():  # this target was not available... let's move on.
+                continue
+            if not destination.path.exists():  # this destination was not available... let's move on.
+                continue
             archive_name = target.stem + destination.name_separator + datetime.now().strftime(destination.date_format)
             if destination.file_format == "zip":  # allows us to support more formats later. :)
                 archive_path = self._create_zip_archive(archive_name, target, destination)
