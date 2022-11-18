@@ -1,4 +1,3 @@
-from typing import Generator
 from pathlib import Path
 from itertools import product
 from datetime import datetime
@@ -119,7 +118,7 @@ class BackupManager:
             destination (Destination): The destination to get delete candidates for.
 
         Returns:
-            list[Backup]: _description_
+            list[Backup]: The list of candidates for deletion.
         """
         target_backups: list[Backup] = []
         for backup in self.get_backups(destination):
@@ -137,8 +136,8 @@ class BackupManager:
         This method deletes all backups returned from BackupManager._get_delete_candidates().
 
         Args:
-            target (Path): _description_
-            destination (Destination): _description_
+            target (Path): The target to delete old backups of.
+            destination (Destination): The destination to search for backups in.
         """
         for backup in self._get_delete_candidates(target, destination):
             self.delete_backup(backup)
@@ -298,7 +297,7 @@ class BackupManager:
             target (Path, optional): Target path to limit the backup search. Defaults to None.
 
         Returns:
-            Backup: _description_
+            Backup: The latest backup
         """
         backups = self.get_backups(source, target=target)
         if len(backups) == 0:
