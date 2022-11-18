@@ -181,7 +181,7 @@ class BackupManager:
         backups.sort(key=self._get_backup_date)
         return backups
 
-    def create_backups(self, preset: Preset, force=False, keep=False) -> Generator[Backup, None, None]:
+    def create_backups(self, preset: Preset, force=False, keep=False) -> list[Backup]:
         """Trigger backup creation of all available targets in a preset to all available destinations in a preset. Automatically rotates backups to keep within the max_backup_count specified.
         \nIf `force` is set to True, the content hash check will be disabled and duplicate backups may be created.
         \nIf `keep` is set to True, the backup rotation will be disabled, allowing you to store backups beyond the max_backup_count.
@@ -196,8 +196,9 @@ class BackupManager:
             FileExistsError: If the backup's content exactly matches the previous backup. The backup will be deleted to save space.
 
         Yields:
-            Generator[Backup, None, None]: yields a `Backup` object.
+            list[Backup]: returns a list of created backups.
         """
+        backups = []
         for target, destination in product(preset._targets, preset._destinations):
             latest_backup = self.get_latest_backup(destination, target)
             if not target.exists():  # this target was not available... let's move on.
@@ -216,7 +217,8 @@ class BackupManager:
                     raise FileExistsError(latest_backup.path)
             if not keep:
                 self._delete_old_backups(target, destination)
-            yield new_backup
+            backups.append(new_backup)
+        return backups
 
     def restore_backup(self, preset: Preset, backup: Backup) -> None:
         raise NotImplementedError
