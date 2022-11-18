@@ -9,7 +9,7 @@ setup(
     ],
     entry_points={
         'console_scripts': [
-            'yabu = yabu_cmd.__main__:cli',
+            'yabu = yabu_cmd.cli:cli',
         ],
     },
 )
