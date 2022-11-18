@@ -55,3 +55,17 @@ YABU loads a file in your HOME directory called `.yabu_config.json`, it should h
 0. user will be shown all unique backups found on the file system.
 1. user can pick a backup to restore.
 2. user can choose to delete a backup upon restoration.
+
+## Testing
+
+This program utilizes `pytest` for testing, with `pytest-cov`, ensure you have them both installed:
+
+`pip install pytest pytest-cov`
+
+To run all tests in the tests directory, run the following command in the repo root directory.
+
+`pytest --cov=yabu_cmd ./tests`
+
+If you'd like the report to be generated into an HTML document (for detailed information), run this command instead:
+
+`pytest --cov=yabu_cmd ./tests --cov-report=html`
