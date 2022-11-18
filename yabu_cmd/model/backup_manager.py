@@ -60,12 +60,18 @@ class BackupManager:
         metafile.unlink()
         return archive_path
 
-    def _rotate_backups(destination):
-        raise NotImplementedError
+    def _rotate_backups(self, target: Path, destination: Destination):
+        target_backups: list[Backup] = []
+        for backup in self.get_backups(destination):
+            if str(backup.target) == str(target):  # allow Path and its children to equate
+                target_backups.append(backup)
+        if len(target_backups) > destination.max_backup_count:
+            for backup in target_backups[:(len(target_backups)-destination.max_backup_count)]:
+                backup.path.unlink()
 
     def create_backups(self, preset: Preset, force=False, keep=False) -> Generator[Backup, None, None]:  # TODO: Implement keep behaviour.
         for target, destination in product(preset._targets, preset._destinations):
-            latest_backup = self.get_latest_backup(preset, destination)
+            latest_backup = self.get_latest_backup(destination)
             if not target.exists():
                 raise FileNotFoundError(target)
             if not destination.path.exists():
@@ -77,9 +83,11 @@ class BackupManager:
                 raise UnsupportedFormatException(destination.file_format)
             new_backup = self.get_backup_from_file(archive_path)
             if not force and latest_backup is not None:
-                if latest_backup.md5_hash == new_backup.md5_hash:
+                if latest_backup.content_hash == new_backup.content_hash:
                     new_backup.path.unlink()
                     raise FileExistsError(latest_backup.path)
+            if not keep:
+                self._rotate_backups(target, destination)
             yield new_backup
 
     def restore_backup(self, preset: Preset, backup: Backup) -> None:
@@ -97,26 +105,25 @@ class BackupManager:
     def _get_backup_date(self, backup: Backup):
         return backup.date
 
-    def get_backups(self, preset: Preset, destination: Destination = None) -> None:
+    def get_backups(self, source: Preset | Destination) -> list[Backup]:
         backups = []
-        if isinstance(destination, Destination):
-            if destination.file_format == "zip":
-                for path in destination.path.glob("*.zip"):
+        if isinstance(source, Destination):
+            if source.file_format == "zip":
+                for path in source.path.glob("*.zip"):
                     backup = self.get_backup_from_file(path)
                     backups.append(backup)
             else:
                 raise UnsupportedFormatException(destination.file_format)
+        elif isinstance(source, Preset):
+            for destination in source._destinations:
+                backups += self.get_backups(destination)
         else:
-            for destination in preset._destinations:
-                backups += self.get_backups(preset, destination)
+            raise TypeError(source)
         backups.sort(key=self._get_backup_date)
         return backups
 
-    def get_latest_backup(self, preset: Preset, destination = None) -> Backup:
-        if destination is not None:
-            backups = self.get_backups(preset, destination)
-        else:
-            backups = self.get_backups(preset)
+    def get_latest_backup(self, source: Preset | Destination) -> Backup:
+        backups = self.get_backups(source)
         if len(backups) == 0:
             return
         return backups[-1]

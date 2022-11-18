@@ -136,19 +136,19 @@ class TestBackupManager:
                 if preset.name == "testFile":
                     assert backup.name == "file"
                     assert backup.date_format == "%d_%m_%y__%H%M%S%f"
-                    assert backup.separator == "-"
+                    assert backup.name_separator == "-"
                     assert str(backup.target) == str(Path("temp/folder/sub_folder/file.txt").absolute()) # allows Path and its children to equate. :)
                 if preset.name == "testFolder":
                     assert backup.name == "folder"
                     assert backup.date_format == "%d_%m_%y__%H%M%S%f"
-                    assert backup.separator == "-"
+                    assert backup.name_separator == "-"
                     assert str(backup.target) == str(Path("temp/folder").absolute())  # allows Path and its children to equate. :)
 
     def test_create_backups_zip_force_no_keep(self, setup_create_backups_force_no_keep):
         preset_manager = PresetManager(setup_create_backups_force_no_keep)
         presets = preset_manager.get_presets()
         backup_manager = BackupManager()
-        for i in range(2):
+        for i in range(4):
             for preset in presets:
                 for backup in backup_manager.create_backups(preset, True, False):
                     assert isinstance(backup, Backup)
@@ -158,5 +158,23 @@ class TestBackupManager:
             testFile_count += 1
         for file in Path("temp").glob("folder*.zip"):
             testFolder_count += 1
-        assert testFile_count == 2
-        assert testFolder_count == 2
+        assert testFile_count == 3
+        assert testFolder_count == 3
+
+    def test_create_backups_zip_force_keep(self, setup_create_backups_force_no_keep):
+        preset_manager = PresetManager(setup_create_backups_force_no_keep)
+        presets = preset_manager.get_presets()
+        backup_manager = BackupManager()
+        for i in range(4):
+            print(i)
+            for preset in presets:
+                for backup in backup_manager.create_backups(preset, True, True):
+                    assert isinstance(backup, Backup)
+        testFile_count = 0
+        testFolder_count = 0
+        for file in Path("temp").glob("file*.zip"):
+            testFile_count += 1
+        for file in Path("temp").glob("folder*.zip"):
+            testFolder_count += 1
+        assert testFile_count == 4
+        assert testFolder_count == 4
