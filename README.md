@@ -11,24 +11,24 @@ YABU stands for "Yet Another Backup Utility"
 YABU loads a file in your HOME directory called `.yabu_config.json`, it should have the following structure:
 ```json
 {
-    "format": 1,
-    "presets": {
-        "minecraft": {
-            "targets": [
+	"format": 1,
+	"presets": {
+		"minecraft": {
+			"targets": [
 				"C:\\Users\\Riley\\AppData\\Roaming\\.minecraft\\saves\\survival_world",
 				"C:\\Users\\Riley\\AppData\\Roaming\\.minecraft\\saves\\creative_world"
 			],
-            "destinations": [
-                {
-                    "path": "E:\\backups\\minecraft",
-                    "file_format": "zip",
-                    "name_separator": "-",
-                    "date_format": "%d_%m_%y__%H%M%S",
-                    "max_backup_count": 10
-                }
-            ]
-        }
-    }
+			"destinations": [
+				{
+					"path": "E:\\backups\\minecraft",
+					"file_format": "zip",
+					"name_separator": "-",
+					"date_format": "%d_%m_%y__%H%M%S",
+					"max_backup_count": 10
+				}
+			]
+		}
+	}
 }
 ```
 ## Requirements
