@@ -2,10 +2,10 @@ from pathlib import Path
 
 import pytest
 
-from ..model.preset_manager import PresetManager
-from ..controller.preset import Preset
-from ..controller.destination import Destination
-from ..exceptions.exceptions import PresetNotFoundException
+from yabu_cmd.model.preset_manager import PresetManager
+from yabu_cmd.controller.preset import Preset
+from yabu_cmd.controller.destination import Destination
+from yabu_cmd.exceptions.exceptions import PresetNotFoundException
 
 class TestPresetManager:
     @pytest.fixture

@@ -3,9 +3,9 @@ from pathlib import Path
 import shutil
 import pytest
 
-from ..controller import Backup
-from ..model import PresetManager
-from ..model import BackupManager
+from yabu_cmd.controller import Backup
+from yabu_cmd.model import PresetManager
+from yabu_cmd.model import BackupManager
 
 class TestBackupManager:
     @pytest.fixture
