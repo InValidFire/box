@@ -16,7 +16,7 @@ class Preset:
         output = self.name
         output += "\n\tTargets:"
         for target in self._targets:
-            output += f"\n\t\t - {target}"
+            output += f"\n\t\t- {target}"
         output += "\n\tDestinations:"
         for destination in self._destinations: 
             output += f"\n\t\t- {destination.path}"
