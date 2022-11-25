@@ -1,7 +1,10 @@
 from pathlib import Path
-from ..model import PresetManager
+from ..model.preset_manager import PresetManager
 from .preset import Preset
 from .backup import Backup
+from ..model.backup_manager import BackupManager
+
+from ..exceptions import PresetNotFoundException, UnsupportedFormatException, BackupHashException, TargetNotFoundException, DestinationNotFoundException
 
 __all__ = ['CommandHandler']
 
@@ -21,23 +24,40 @@ class CommandHandler:
             output += f"The path exists, it doesn't seem to be a .json file though: '{self.config_path}'"
         return output
 
-    def get_preset(self, name: str):
-        raise NotImplementedError
-
-    def save_preset(self, preset: Preset):
+    def save_preset(self, preset: str):
         raise NotImplementedError
     
-    def delete_preset(self, preset: Preset) -> Preset:
+    def delete_preset(self, preset: str) -> Preset:
         raise NotImplementedError
 
-    def list_backups(self, preset: Preset) -> list[Backup]:
+    def list_backups(self, preset: str) -> list[Backup]:
         raise NotImplementedError
 
-    def create_backup(self, preset: Preset) -> Backup:
+    def create_backups(self, preset_name: str, force: bool, keep: bool) -> Backup:
+        output = ""
+        try:
+            backup_manager = BackupManager()
+            preset_manager = PresetManager(self.config_path)
+            preset = preset_manager[preset_name]
+        except PresetNotFoundException:
+            output += f"The requested preset '{preset_name}' was not found."
+
+        output += "The following backups were created:\n"
+        try:
+            for backup in backup_manager.create_backups(preset, force=force, keep=keep):
+                output += str(backup) + "\n"
+        except TargetNotFoundException as e:
+            output += f"Backup Failed:\n\tTarget not found:\n\tTarget: {e.target}\n\tDestination: {e.destination}\n"
+        except DestinationNotFoundException as e:
+            output += f"Backup Failed:\n\tDestination not found:\n\tTarget: {e.target}\n\tDestination: {e.destination}\n"
+        except BackupHashException as e:
+            output += f"Backup Failed:\n\tBackup hash matched latest backup in destination path.\n\tTarget: {e.target}\n\tDestination: {e.destination}\n"
+        except UnsupportedFormatException as e:
+            output += f"Backup Failed:\n\tBackup format unsupported\n\tTarget: {e.target}\n\Destination: {e.destination}\n"
+        return output
+
+    def delete_backup(self, backup: str) -> Backup:
         raise NotImplementedError
 
-    def delete_backup(self, backup: Backup) -> Backup:
-        raise NotImplementedError
-
-    def restore_backup(self, preset: Preset, backup: Backup) -> Backup:
+    def restore_backup(self, preset: str, backup: str) -> Backup:
         raise NotImplementedError

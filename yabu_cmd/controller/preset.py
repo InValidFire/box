@@ -2,7 +2,6 @@ from pathlib import Path
 from datetime import datetime
 
 from .destination import Destination
-from .backup import Backup
 
 __all__ = ['Preset']
 
@@ -64,15 +63,3 @@ class Preset:
 
     def remove_destination(self, destination: Destination):
         self._destinations.remove(destination)
-
-    def create_backup(self) -> Backup:
-        raise NotImplementedError
-
-    def restore_backup(self, backup: Backup) -> None:
-        raise NotImplementedError
-
-    def get_backups(self) -> list[Backup]:
-        raise NotImplementedError
-
-    def get_latest_backup(self) -> Backup:
-        raise NotImplementedError

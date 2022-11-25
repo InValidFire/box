@@ -28,6 +28,9 @@ class Destination:
                 return False
         return True
 
+    def __str__(self) -> str:
+        return str(self.path)
+
     @property
     def path(self) -> Path:
         return self._path

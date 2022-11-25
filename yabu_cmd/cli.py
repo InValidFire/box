@@ -22,8 +22,11 @@ def presets(obj):
 @click.option("--force", "-f", default=False)
 @click.option("--keep", "-k", default=False)
 @click.argument("preset")
-def backup(preset, force, keep):
-    print(f"creating a backup of '{preset}' | " + str(force) + " | " + str(keep))
+@click.pass_obj
+def backup(obj, preset, force, keep):
+    print("Creating backups...")
+    handler = CommandHandler(obj['config'])
+    print(handler.create_backups(preset, force, keep))
 
 @cli.command()
 @click.argument("preset")
