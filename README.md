@@ -58,6 +58,14 @@ YABU loads a file in your HOME directory called `.yabu_config.json`, it should h
 
 ## Testing
 
+To run the program in a testing environment, first install the program using pip.
+
+`pip install -e <repo-directory>`
+
+Then you can run the command under the `yabu` command name. :)
+
+---
+
 This program utilizes `pytest` for testing, with `pytest-cov`, ensure you have them both installed:
 
 `pip install pytest pytest-cov`
