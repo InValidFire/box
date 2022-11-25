@@ -35,9 +35,9 @@ class TestCLI:
         preset_json_file.unlink()
         temp_dir.rmdir()   
 
-    def test_list_cmd(self, preset_json):
+    def test_presets_cmd(self, preset_json):
         runner = CliRunner()
-        result = runner.invoke(cli, "--config temp/presets.json list".split())
+        result = runner.invoke(cli, "--config temp/presets.json presets".split())
         assert "minecraft" in result.output
         assert "Targets:" in result.output
         assert "- awa" in result.output
@@ -48,12 +48,12 @@ class TestCLI:
         assert "Date Format:" in result.output
         assert "Name Separator:" in result.output
 
-    def test_list_cmd_not_found(self):
+    def test_presets_cmd_not_found(self):
         runner = CliRunner()
-        result = runner.invoke(cli, "--config temp/presets.json list".split())
+        result = runner.invoke(cli, "--config temp/presets.json presets".split())
         assert "Uh-Oh! Your config file appears to be missing:" in result.output 
 
-    def test_list_cmd_not_file(self, preset_json):
+    def test_presets_cmd_not_file(self, preset_json):
         runner = CliRunner()
-        result = runner.invoke(cli, "--config temp list".split())
+        result = runner.invoke(cli, "--config temp presets".split())
         assert "The path exists, it doesn't seem to be a .json file though:" in result.output

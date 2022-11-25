@@ -13,7 +13,7 @@ def cli(ctx: click.Context, config):
 
 @cli.command()
 @click.pass_obj
-def list(obj):
+def presets(obj):
     handler = CommandHandler(obj['config'])
     print(handler.list_presets())
 
