@@ -64,7 +64,7 @@ class BackupManager:
             "content_hash": content_hash
         }
         with temp_path.open("w") as fp:
-            json.dump(metadata, fp)
+            json.dump(metadata, fp, indent=4)
         return temp_path
 
     def _create_zip_archive(self, archive_name: str, target: Path, destination: Destination) -> Path:
