@@ -14,6 +14,14 @@ from ..exceptions import UnsupportedFormatException, NotABackupException, Backup
 
 __all__ = ['BackupManager']
 
+def get_content_type(target: Path):
+    if target.is_dir():
+        return "folder"
+    elif target.is_file():
+        return "file"
+    else:
+        raise ValueError(target)  # again... this should never be raised. but just in case.
+
 class BackupManager:
     def __new__(cls):
         if not hasattr(cls, 'instance'):
@@ -61,7 +69,8 @@ class BackupManager:
             "target": str(target),
             "name_separator": destination.name_separator,
             "date_format": destination.date_format,
-            "content_hash": content_hash
+            "content_hash": content_hash,
+            "content_type": get_content_type(target)
         }
         with temp_path.open("w") as fp:
             json.dump(metadata, fp, indent=4)
