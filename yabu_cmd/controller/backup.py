@@ -13,6 +13,7 @@ class Backup:
     target: Path = None
     date: datetime = None
     content_hash: str = None
+    content_type: str = None
 
     def __str__(self) -> str:
         output = "Backup:"
@@ -23,4 +24,5 @@ class Backup:
         output += f"\n\ttarget: {self.target}"
         output += f"\n\tdate: {self.date}"
         output += f"\n\tcontent_hash: {self.content_hash}"
+        output += f"\n\tcontent_type: {self.content_type}"
         return output
