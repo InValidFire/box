@@ -128,7 +128,10 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
-#nuitka
+# nuitka
 *build/
 *dist/
 *.exe
+
+# vscode
+.vscode/
