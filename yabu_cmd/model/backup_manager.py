@@ -10,7 +10,7 @@ from ..controller.backup import Backup
 from ..controller.preset import Preset
 from ..controller.destination import Destination
 
-from ..exceptions import FormatException, NotABackupException, BackupHashException, TargetNotFoundException, DestinationNotFoundException
+from ..exceptions import YabuException, FormatException, NotABackupException, BackupHashException, TargetNotFoundException, DestinationNotFoundException
 
 __all__ = ['BackupManager']
 
@@ -190,7 +190,7 @@ class BackupManager:
         backups.sort(key=self._get_backup_date)
         return backups
 
-    def create_backups(self, preset: Preset, force=False, keep=False) -> Generator[Backup, None, None]:
+    def create_backups(self, preset: Preset, force=False, keep=False) -> Generator[Backup | YabuException, None, None]:
         """Trigger backup creation of all available targets in a preset to all available destinations in a preset. Automatically rotates backups to keep within the max_backup_count specified.
         \nIf `force` is set to True, the content hash check will be disabled and duplicate backups may be created.
         \nIf `keep` is set to True, the backup rotation will be disabled, allowing you to store backups beyond the max_backup_count.
@@ -200,31 +200,29 @@ class BackupManager:
             force (bool, optional): Disable content hash checking and allow duplicate backups. Defaults to False.
             keep (bool, optional): Disable backup rotation. Defaults to False.
 
-        Raises:
+        Yields:
             UnsupportedFormatException: If the destination's file_format is unknown.
             BackupHashException: If the backup's content exactly matches the previous backup. The backup will be deleted to save space.
             TargetNotFoundException: If the backup's target could not be found.
             DestinationNotFoundException: If the backup's destination could not be found.
-
-        Yields:
             Backup: yields a backup of the target stored in the destination.
         """
         for target, destination in product(preset._targets, preset._destinations):
             latest_backup = self.get_latest_backup(destination, target)
             if not target.exists():  # this target was not available... let's move on.
-                raise TargetNotFoundException(msg=target, target=target, destination=destination)
+                yield TargetNotFoundException(msg=target, target=target, destination=destination)  # cannot raise exceptions or the generator dies. we'll raise them later.
             if not destination.path.exists():  # this destination was not available... let's move on.
-                raise DestinationNotFoundException(msg=destination.path, target=target, destination=destination)
+                yield DestinationNotFoundException(msg=destination.path, target=target, destination=destination)
             archive_name = target.stem + destination.name_separator + datetime.now().strftime(destination.date_format)
             if destination.file_format == "zip":  # allows us to support more formats later. :)
                 archive_path = self._create_zip_archive(archive_name, target, destination)
             else:
-                raise FormatException(msg=destination.file_format, target=target, destination=destination)
+                yield FormatException(msg=destination.file_format, target=target, destination=destination)
             new_backup = self.get_backup_from_file(archive_path)
             if not force and latest_backup is not None:
                 if latest_backup.content_hash == new_backup.content_hash:
                     new_backup.path.unlink()
-                    raise BackupHashException(msg=latest_backup.path, target=target, destination=destination)
+                    yield BackupHashException(msg=latest_backup.path, target=target, destination=destination)
             if not keep:
                 self._delete_old_backups(target, destination)
             yield new_backup

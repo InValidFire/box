@@ -2,7 +2,6 @@ from pathlib import Path
 import click
 
 from yabu_cmd.controller import CommandHandler
-from yabu_cmd.controller import Destination
 from yabu_cmd.exceptions import PresetNotFoundException, TargetNotFoundException, DestinationNotFoundException, BackupHashException, FormatException
 
 @click.group()
@@ -34,26 +33,24 @@ def presets(obj):
 def backup(obj, preset, force, keep):
     print("Creating backups...")
     handler = CommandHandler(obj['config'])
-    finished = False
-    while not finished:
-        backup_generator = handler.create_backups(preset, force, keep)
-        try:
-            print("The following backups were created: ")
-            for backup in backup_generator:
+    print("The following backups were created: ")
+    try:
+        for backup in handler.create_backups(preset, force, keep):
+            if isinstance(backup, Exception):
+                raise backup  # backup generator might yield exceptions since it can't raise them personally.
+            else:
                 print(backup)
-        except PresetNotFoundException:
-            print(f"The requested preset '{obj['location']}' is not found.")
-        except TargetNotFoundException as e:
-            
-            print(f"Backup Failed:\n\tTarget not found:\n\tTarget: {e.target}\n\tDestination: {e.destination}")
-        except DestinationNotFoundException as e:
-            print(f"Backup Failed:\n\Destination not found:\n\tTarget: {e.target}\n\tDestination: {e.destination}")
-        except BackupHashException as e:
-            print(f"Backup Failed:\n\tBackup hash matched latest backup in destination path.\n\tTarget: {e.target}\n\tDestination: {e.destination}")
-        except FormatException as e:
-            print(f"Backup Failed:\n\tBackup format unsupported\n\tTarget: {e.target}\n\Destination: {e.destination}")
-        except StopIteration:
-            finished = True
+    except PresetNotFoundException:
+        print(f"The requested preset '{obj['location']}' is not found.")
+    except TargetNotFoundException as e:
+        
+        print(f"Backup Failed:\n\tTarget not found:\n\tTarget: {e.target}\n\tDestination: {e.destination}")
+    except DestinationNotFoundException as e:
+        print(f"Backup Failed:\n\Destination not found:\n\tTarget: {e.target}\n\tDestination: {e.destination}")
+    except BackupHashException as e:
+        print(f"Backup Failed:\n\tBackup hash matched latest backup in destination path.\n\tTarget: {e.target}\n\tDestination: {e.destination}")
+    except FormatException as e:
+        print(f"Backup Failed:\n\tBackup format unsupported\n\tTarget: {e.target}\n\Destination: {e.destination}")
 
 
 @cli.command()

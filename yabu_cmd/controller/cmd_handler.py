@@ -1,5 +1,4 @@
 from pathlib import Path
-from typing import Generator
 
 from ..model.preset_manager import PresetManager
 from .preset import Preset
@@ -7,7 +6,7 @@ from .backup import Backup
 from .destination import Destination
 from ..model.backup_manager import BackupManager
 
-from ..exceptions import PresetNotFoundException, FormatException, BackupHashException, TargetNotFoundException, DestinationNotFoundException, TargetMatchException
+from ..exceptions import YabuException, TargetMatchException
 
 __all__ = ['CommandHandler']
 
@@ -45,12 +44,14 @@ class CommandHandler:
         return backup_manager.get_backups(location)
 
 
-    def create_backups(self, preset_name: str, force: bool, keep: bool) -> Generator[Backup, None, None]:
+    def create_backups(self, preset_name: str, force: bool, keep: bool) -> list[Backup]:
         backup_manager = BackupManager()
         preset_manager = PresetManager(self.config_path)
         preset = preset_manager[preset_name]
+        backups: list[Backup | YabuException] = []
         for backup in backup_manager.create_backups(preset, force=force, keep=keep):
-            yield backup
+            backups.append(backup)
+        return backups
 
 
     def delete_backup(self, backup_path: Path) -> Backup:
