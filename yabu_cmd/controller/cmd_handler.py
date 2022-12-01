@@ -1,63 +1,74 @@
 from pathlib import Path
+from typing import Generator
+
 from ..model.preset_manager import PresetManager
 from .preset import Preset
 from .backup import Backup
+from .destination import Destination
 from ..model.backup_manager import BackupManager
 
-from ..exceptions import PresetNotFoundException, UnsupportedFormatException, BackupHashException, TargetNotFoundException, DestinationNotFoundException
+from ..exceptions import PresetNotFoundException, FormatException, BackupHashException, TargetNotFoundException, DestinationNotFoundException, TargetMatchException
 
 __all__ = ['CommandHandler']
+
 
 class CommandHandler:
     def __init__(self, config_path: Path | str) -> None:
         self.config_path = config_path
         
+
     def list_presets(self) -> list[Preset]:
-        output = ""
-        try:
-            preset_manager = PresetManager(self.config_path)
-            for preset in preset_manager.get_presets():
-                output += str(preset)
-        except FileNotFoundError:
-            output += f"Uh-Oh! Your config file appears to be missing: '{self.config_path}'"
-        except ValueError:
-            output += f"The path exists, it doesn't seem to be a .json file though: '{self.config_path}'"
-        return output
+        preset_manager = PresetManager(self.config_path)
+        return preset_manager.get_presets()
+
+
+    def get_preset(self, preset_name: str) -> Preset:
+        preset_manager = PresetManager(self.config_path)
+        return preset_manager.get_preset(preset_name)
+
 
     def save_preset(self, preset: str):
         raise NotImplementedError
-    
+
+
     def delete_preset(self, preset: str) -> Preset:
         raise NotImplementedError
 
-    def list_backups(self, preset: str) -> list[Backup]:
-        raise NotImplementedError
 
-    def create_backups(self, preset_name: str, force: bool, keep: bool) -> Backup:
-        output = ""
-        try:
-            backup_manager = BackupManager()
+    def list_backups(self, location: str | Path, file_format = ".zip") -> list[Backup]:
+        backup_manager = BackupManager()
+        if isinstance(location, str):
             preset_manager = PresetManager(self.config_path)
-            preset = preset_manager[preset_name]
-        except PresetNotFoundException:
-            output += f"The requested preset '{preset_name}' was not found."
+            location = preset_manager.get_preset(location)
+        if isinstance(location, Path):
+            location = Destination(location, file_format=file_format)  # convert location path to a destination object.
+        return backup_manager.get_backups(location)
 
-        output += "The following backups were created:\n"
-        try:
-            for backup in backup_manager.create_backups(preset, force=force, keep=keep):
-                output += str(backup) + "\n"
-        except TargetNotFoundException as e:
-            output += f"Backup Failed:\n\tTarget not found:\n\tTarget: {e.target}\n\tDestination: {e.destination}\n"
-        except DestinationNotFoundException as e:
-            output += f"Backup Failed:\n\tDestination not found:\n\tTarget: {e.target}\n\tDestination: {e.destination}\n"
-        except BackupHashException as e:
-            output += f"Backup Failed:\n\tBackup hash matched latest backup in destination path.\n\tTarget: {e.target}\n\tDestination: {e.destination}\n"
-        except UnsupportedFormatException as e:
-            output += f"Backup Failed:\n\tBackup format unsupported\n\tTarget: {e.target}\n\Destination: {e.destination}\n"
-        return output
 
-    def delete_backup(self, backup: str) -> Backup:
-        raise NotImplementedError
+    def create_backups(self, preset_name: str, force: bool, keep: bool) -> Generator[Backup, None, None]:
+        backup_manager = BackupManager()
+        preset_manager = PresetManager(self.config_path)
+        preset = preset_manager[preset_name]
+        for backup in backup_manager.create_backups(preset, force=force, keep=keep):
+            yield backup
 
-    def restore_backup(self, preset: str, backup: str) -> Backup:
-        raise NotImplementedError
+
+    def delete_backup(self, backup_path: Path) -> Backup:
+        backup_manager = BackupManager()
+        backup = backup_manager.get_backup_from_file(backup_path)
+        backup_manager.delete_backup(backup)
+
+
+    def restore_backup(self, location: str | Path, backup: Backup) -> Backup:
+        backup_manager = BackupManager()
+        if isinstance(location, str):  # get the preset from the preset name
+            preset_manager = PresetManager(self.config_path)
+            preset = preset_manager.get_preset(location)
+            if backup.target in preset._targets:
+                backup_manager.restore_backup(backup.target, backup) 
+            else:
+                raise TargetMatchException(preset, backup.target, backup.path.parent)
+        elif isinstance(location, Path):
+            backup_manager.restore_backup(location, backup)
+        else:
+            raise TypeError(location)

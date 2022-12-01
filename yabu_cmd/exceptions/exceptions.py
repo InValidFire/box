@@ -24,7 +24,7 @@ class PresetNotFoundException(PresetException):
 class InvalidPresetConfig(PresetException):
     pass
 
-class UnsupportedFormatException(BackupException):
+class FormatException(BackupException):
     pass
 
 class BackupHashException(BackupException):
@@ -34,4 +34,7 @@ class DestinationNotFoundException(BackupException):
     pass
 
 class TargetNotFoundException(BackupException):
+    pass
+
+class TargetMatchException(BackupException):
     pass

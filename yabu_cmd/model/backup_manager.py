@@ -10,7 +10,7 @@ from ..controller.backup import Backup
 from ..controller.preset import Preset
 from ..controller.destination import Destination
 
-from ..exceptions import UnsupportedFormatException, NotABackupException, BackupHashException, TargetNotFoundException, DestinationNotFoundException
+from ..exceptions import FormatException, NotABackupException, BackupHashException, TargetNotFoundException, DestinationNotFoundException
 
 __all__ = ['BackupManager']
 
@@ -186,7 +186,7 @@ class BackupManager:
                 backup = self.get_backup_from_file(path)
                 backups.append(backup)
         else:
-            raise UnsupportedFormatException(destination.file_format)
+            raise FormatException(destination.file_format)
         backups.sort(key=self._get_backup_date)
         return backups
 
@@ -219,7 +219,7 @@ class BackupManager:
             if destination.file_format == "zip":  # allows us to support more formats later. :)
                 archive_path = self._create_zip_archive(archive_name, target, destination)
             else:
-                raise UnsupportedFormatException(msg=destination.file_format, target=target, destination=destination)
+                raise FormatException(msg=destination.file_format, target=target, destination=destination)
             new_backup = self.get_backup_from_file(archive_path)
             if not force and latest_backup is not None:
                 if latest_backup.content_hash == new_backup.content_hash:
@@ -229,8 +229,13 @@ class BackupManager:
                 self._delete_old_backups(target, destination)
             yield new_backup
 
-    def restore_backup(self, preset: Preset, backup: Backup) -> None:
+    def restore_backup(self, target: Path, backup: Backup) -> None:
         raise NotImplementedError
+        #  determine if file or folder backup
+        #  check if path exists and matches expected content type
+        #    - if exists and mis-matches... throw an exception
+        #  extract zip file to target
+        #  remove .yabu.meta
 
     def delete_backup(self, backup: Backup) -> None:
         """Delete the given backup.
