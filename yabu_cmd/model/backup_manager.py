@@ -47,7 +47,7 @@ class BackupManager:
                 else:
                     metadata = json.loads(zip_file.read(".yabu.meta").decode("utf-8"))
                     date = datetime.strptime(file_path.stem.split(metadata['name_separator'])[1], metadata['date_format'])
-            return Backup(file_path.stem.split(metadata['name_separator'])[0], file_path.absolute(), metadata['date_format'], metadata['name_separator'], metadata['target'], date, metadata['content_hash'], metadata['content_type'])
+            return Backup(file_path.stem.split(metadata['name_separator'])[0], file_path.absolute(), metadata['date_format'], metadata['name_separator'], Path(metadata['target']), date, metadata['content_hash'], metadata['content_type'])
 
     def _create_metafile(self, target: Path, destination: Destination, content_hash: str) -> Path:
         """Create the metafile of a backup. Stores the backup's target source, the name_separator, the date_format, and the content_hash. 
@@ -132,7 +132,7 @@ class BackupManager:
         """
         target_backups: list[Backup] = []
         for backup in self.get_backups(destination):
-            if str(backup.target) == str(target):  # allow Path and its children to equate
+            if backup.target == target:
                 target_backups.append(backup)
         if len(target_backups) > destination.max_backup_count:
             return target_backups[:(len(target_backups)-destination.max_backup_count)]
@@ -164,7 +164,7 @@ class BackupManager:
         """
         backups = []
         for backup in self._get_destination_backups(destination):
-            if str(backup.target) == str(target):
+            if backup.target == target:
                 backups.append(backup)
         return backups
 
