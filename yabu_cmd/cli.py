@@ -122,12 +122,6 @@ def restore(obj, location: str, path: bool):
         print("The backup is stored in an unsupported format.")
     except TargetMatchException:
         print("The backup's target does not match the preset target.")  # currently I don't think there's a way to reach this message.
-    
-
-@cli.command()
-@click.argument("preset")
-def modify(preset):
-    print(f"modifying the preset '{preset}'")
 
 if __name__ == "__main__":
     cli()

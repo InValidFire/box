@@ -31,14 +31,6 @@ class CommandHandler:
         return preset_manager[preset_name]._targets.copy()
 
 
-    def save_preset(self, preset: str):
-        raise NotImplementedError
-
-
-    def delete_preset(self, preset: str) -> Preset:
-        raise NotImplementedError
-
-
     def list_backups(self, location: str | Path, file_format = "zip") -> list[Backup]:
         backup_manager = BackupManager()
         if isinstance(location, str):
