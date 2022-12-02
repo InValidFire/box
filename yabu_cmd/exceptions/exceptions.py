@@ -12,8 +12,11 @@ class NotABackupException(YabuException):
 class PresetException(YabuException):
     pass
 
+class ContentTypeException(YabuException):
+    pass
+
 class BackupException(YabuException):
-    def __init__(self, msg, target: Path, destination: Path) -> None:
+    def __init__(self, msg, target: Path = None, destination: Path = None) -> None:
         self.target = target
         self.destination = destination
         super().__init__(msg)

@@ -10,9 +10,25 @@ from ..controller.backup import Backup
 from ..controller.preset import Preset
 from ..controller.destination import Destination
 
-from ..exceptions import YabuException, FormatException, NotABackupException, BackupHashException, TargetNotFoundException, DestinationNotFoundException
+from ..exceptions import YabuException, FormatException, NotABackupException, BackupHashException, TargetNotFoundException, DestinationNotFoundException, ContentTypeException
 
 __all__ = ['BackupManager']
+
+def extract_zip_archive(archive_path: Path, destination_path: Path):
+    zf = ZipFile(archive_path)
+    zf.extractall(destination_path)
+
+def restore_zip_archive(backup: Backup, target: Path):
+    extract_zip_archive(backup.path, target)
+    target.joinpath(".yabu.meta").unlink()
+
+def rmdir(path: Path):
+    for file in path.iterdir():
+        if file.is_file():
+            file.unlink()
+        if file.is_dir():
+            rmdir(file)
+    path.rmdir()
 
 def get_content_type(target: Path):
     if target.is_dir():
@@ -228,12 +244,26 @@ class BackupManager:
             yield new_backup
 
     def restore_backup(self, target: Path, backup: Backup) -> None:
-        raise NotImplementedError
-        #  determine if file or folder backup
-        #  check if path exists and matches expected content type
-        #    - if exists and mis-matches... throw an exception
-        #  extract zip file to target
-        #  remove .yabu.meta
+        if not target.parent.exists():
+            raise FileNotFoundError(target.parent)
+        if (target.is_dir() and backup.content_type == "file") or (target.is_file() and backup.content_type == "folder"):
+            raise ContentTypeException(f"The backup content type '{backup.content_type}' does not match the target Type.")
+        if backup.content_type == "folder":
+            if target.exists():
+                rmdir(target)
+            target.mkdir()
+            if backup.path.suffix == ".zip":  # allows us to support multiple formats later. :)
+                restore_zip_archive(backup, target)
+            else:
+                raise FormatException(backup.path.suffix)
+        elif backup.content_type == "file":
+            if backup.path.suffix == ".zip":
+                target.unlink(missing_ok=True)
+                restore_zip_archive(backup, target.parent)
+            else:
+                raise FormatException(backup.path.suffix)
+        else:
+            raise ContentTypeException(f"The backup content type '{backup.content_type}' is not expected.")
 
     def delete_backup(self, backup: Backup) -> None:
         """Delete the given backup.

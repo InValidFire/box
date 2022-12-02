@@ -26,6 +26,11 @@ class CommandHandler:
         return preset_manager.get_preset(preset_name)
 
 
+    def get_preset_targets(self, preset_name: str) -> list[Path]:
+        preset_manager = PresetManager(self.config_path)
+        return preset_manager[preset_name]._targets.copy()
+
+
     def save_preset(self, preset: str):
         raise NotImplementedError
 
@@ -34,7 +39,7 @@ class CommandHandler:
         raise NotImplementedError
 
 
-    def list_backups(self, location: str | Path, file_format = ".zip") -> list[Backup]:
+    def list_backups(self, location: str | Path, file_format = "zip") -> list[Backup]:
         backup_manager = BackupManager()
         if isinstance(location, str):
             preset_manager = PresetManager(self.config_path)
@@ -66,9 +71,9 @@ class CommandHandler:
             preset_manager = PresetManager(self.config_path)
             preset = preset_manager.get_preset(location)
             if backup.target in preset._targets:
-                backup_manager.restore_backup(backup.target, backup) 
+                backup_manager.restore_backup(backup.target, backup)
             else:
-                raise TargetMatchException(preset, backup.target, backup.path.parent)
+                raise TargetMatchException(preset, backup.target)
         elif isinstance(location, Path):
             backup_manager.restore_backup(location, backup)
         else:
