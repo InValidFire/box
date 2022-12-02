@@ -36,7 +36,7 @@ def presets(obj):
 @click.argument("preset")
 @click.pass_obj
 def backup(obj, preset: str, force: bool, keep: bool):
-    """Command-Line entry point for backup creation.
+    """Create a backup of a preset's targets.
 
     Args:
         obj (dict): Click's context object.
@@ -76,7 +76,7 @@ def backup(obj, preset: str, force: bool, keep: bool):
 @click.argument("location")
 @click.pass_obj
 def restore(obj, location: str, path: bool):
-    """Command-Line entry point for backup restoration.
+    """Restore a backup to its target.
 
     Args:
         obj (dict): Click's context object.
