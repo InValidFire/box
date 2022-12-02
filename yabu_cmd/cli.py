@@ -72,7 +72,7 @@ def backup(obj, preset: str, force: bool, keep: bool):
 
 
 @cli.command()
-@click.option("--path", "-p", type=bool, default=False, is_flag=True)
+@click.option("--dir", "-d", type=bool, default=False, is_flag=True)
 @click.argument("location")
 @click.pass_obj
 def restore(obj, location: str, path: bool):
@@ -85,8 +85,8 @@ def restore(obj, location: str, path: bool):
 
     Usage:
         `yabu restore <preset>`
-        `yabu restore -p <path>`
-        `yabu restore <path> -p`
+        `yabu restore -d <path>`
+        `yabu restore <path> -d`
     """
     handler = CommandHandler(obj['config'])
     try:
