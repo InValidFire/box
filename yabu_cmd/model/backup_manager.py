@@ -227,18 +227,22 @@ class BackupManager:
             latest_backup = self.get_latest_backup(destination, target)
             if not target.exists():  # this target was not available... let's move on.
                 yield TargetNotFoundException(msg=target, target=target, destination=destination)  # cannot raise exceptions or the generator dies. we'll raise them later.
+                continue
             if not destination.path.exists():  # this destination was not available... let's move on.
                 yield DestinationNotFoundException(msg=destination.path, target=target, destination=destination)
+                continue
             archive_name = target.stem + destination.name_separator + datetime.now().strftime(destination.date_format)
             if destination.file_format == "zip":  # allows us to support more formats later. :)
                 archive_path = self._create_zip_archive(archive_name, target, destination)
             else:
                 yield FormatException(msg=destination.file_format, target=target, destination=destination)
+                continue
             new_backup = self.get_backup_from_file(archive_path)
             if not force and latest_backup is not None:
                 if latest_backup.content_hash == new_backup.content_hash:
                     new_backup.path.unlink()
                     yield BackupHashException(msg=latest_backup.path, target=target, destination=destination)
+                    continue
             if not keep:
                 self._delete_old_backups(target, destination)
             yield new_backup

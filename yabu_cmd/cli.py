@@ -52,23 +52,23 @@ def backup(obj, preset: str, force: bool, keep: bool):
     """
     print("Creating backups...")
     handler = CommandHandler(obj['config'])
-    print("The following backups were created: ")
-    try:
-        for backup in handler.create_backups(preset, force, keep):
+    print("Please wait for backups to be created: ")
+    for backup in handler.create_backups(preset, force, keep):
+        try:
             if isinstance(backup, Exception):
                 raise backup  # backup generator might yield exceptions since it can't raise them personally.
-            else:
-                print(backup)
-    except PresetNotFoundException:
-        print(f"The requested preset '{obj['location']}' is not found.")
-    except TargetNotFoundException as e:
-        print(f"Backup Failed:\n\tTarget not found:\n\tTarget: {e.target}\n\tDestination: {e.destination}")
-    except DestinationNotFoundException as e:
-        print(f"Backup Failed:\n\Destination not found:\n\tTarget: {e.target}\n\tDestination: {e.destination}")
-    except BackupHashException as e:
-        print(f"Backup Failed:\n\tBackup hash matched latest backup in destination path.\n\tTarget: {e.target}\n\tDestination: {e.destination}")
-    except FormatException as e:
-        print(f"Backup Failed:\n\tBackup format unsupported\n\tTarget: {e.target}\n\Destination: {e.destination}")
+        except PresetNotFoundException:
+            print(f"The requested preset '{obj['location']}' is not found.")
+        except TargetNotFoundException as e:
+            print(f"Backup Failed:\n\tTarget not found:\n\tTarget: {e.target}\n\tDestination: {e.destination}")
+        except DestinationNotFoundException as e:
+            print(f"Backup Failed:\n\Destination not found:\n\tTarget: {e.target}\n\tDestination: {e.destination}")
+        except BackupHashException as e:
+            print(f"Backup Failed:\n\tBackup hash matched latest backup in destination path.\n\tTarget: {e.target}\n\tDestination: {e.destination}")
+        except FormatException as e:
+            print(f"Backup Failed:\n\tBackup format unsupported\n\tTarget: {e.target}\n\Destination: {e.destination}")
+        else:
+            print(backup)
 
 
 @cli.command()
