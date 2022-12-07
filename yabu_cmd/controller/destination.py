@@ -4,8 +4,6 @@ VALID_FILE_FORMATS = ['zip']
 
 __all__ = ['Destination']
 
-# TODO: notify user when destination doesn't exist or is not a folder.
-
 class Destination:
     def __init__(self, path: Path, date_format: str = "%d_%m_%y__%H%M%S", name_separator: str = "-", max_backup_count: int = 3, file_format: str = "zip"):
         self.path = path
