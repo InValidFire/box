@@ -2,7 +2,7 @@ from pathlib import Path
 from typing import Generator
 from itertools import product
 from datetime import datetime
-from zipfile import ZipFile
+from zipfile import ZipFile, ZIP_LZMA
 import json
 import hashlib
 
@@ -107,7 +107,7 @@ class BackupManager:
             Path: The path of the newly created archive.
         """
         archive_path = destination.path.joinpath(archive_name + ".zip")
-        with ZipFile(archive_path, mode="w") as zip_file:
+        with ZipFile(archive_path, mode="w", compression=ZIP_LZMA) as zip_file:
             if target.is_dir():
                 for item in target.glob("**/*"):
                     zip_file.write(item, item.relative_to(target))
@@ -117,7 +117,7 @@ class BackupManager:
                 raise ValueError(target)  # this should never be raised... **crosses fingers**
         md5_hash = hashlib.md5(archive_path.read_bytes()).hexdigest()
         metafile = self._create_metafile(target, destination, md5_hash)
-        with ZipFile(archive_path, "a") as zip_file:
+        with ZipFile(archive_path, "a", compression=ZIP_LZMA) as zip_file:
             zip_file.write(metafile, metafile.relative_to(destination.path))
         metafile.unlink()
         return archive_path
