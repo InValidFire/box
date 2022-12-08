@@ -39,7 +39,12 @@ def rmdir(path: Path):
 
     Args:
         path (Path): The path to target.
+
+    Raises:
+        ValueError: If the path is not a directory.
     """
+    if not path.is_dir():
+        raise ValueError(path)
     for file in path.iterdir():
         if file.is_file():
             file.unlink()
