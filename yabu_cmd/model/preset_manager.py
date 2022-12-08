@@ -165,7 +165,7 @@ class PresetManager:
         return presets_dict
 
     def _get_presets(self) -> dict[str, Preset]:
-        """Internal method to get presets in a dictionary format. Used to facilitate efficient updating of values.
+        """Internal method to load presets from the config file into a dictionary format.
 
         Returns:
             dict[str, Preset]: The dictionary of Preset objects, with the preset name as the key.
