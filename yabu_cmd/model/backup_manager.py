@@ -15,14 +15,31 @@ from ..exceptions import YabuException, FormatException, NotABackupException, Ba
 __all__ = ['BackupManager']
 
 def extract_zip_archive(archive_path: Path, destination_path: Path):
+    """Extract a zip archive at the given path to the destination path.
+
+    Args:
+        archive_path (Path): The path to the zip archive.
+        destination_path (Path): The destination to extract the archive in.
+    """
     zf = ZipFile(archive_path)
     zf.extractall(destination_path)
 
 def restore_zip_archive(backup: Backup, target: Path):
+    """Restore a zip backup to a target path.
+
+    Args:
+        backup (Backup): The backup to restore.
+        target (Path): The target to restore to.
+    """
     extract_zip_archive(backup.path, target)
     target.joinpath(".yabu.meta").unlink()
 
 def rmdir(path: Path):
+    """Recursively remove a directory and its contents.
+
+    Args:
+        path (Path): The path to target.
+    """
     for file in path.iterdir():
         if file.is_file():
             file.unlink()
@@ -30,7 +47,18 @@ def rmdir(path: Path):
             rmdir(file)
     path.rmdir()
 
-def get_content_type(target: Path):
+def get_content_type(target: Path) -> str:
+    """Get the content type of a target path in string format.
+
+    Args:
+        target (Path): The target path.
+
+    Raises:
+        ValueError: If the target path is neither a file or folder.
+
+    Returns:
+        str: The content type.
+    """
     if target.is_dir():
         return "folder"
     elif target.is_file():
