@@ -11,6 +11,7 @@ from ..controller.destination import VALID_FILE_FORMATS
 
 __all__ = ["PresetManager"]
 
+# this JSON schema is used to validate the PresetManager config file structure.
 schema = {
     "$schema": "http://json-schema.org/draft-06/schema#",
     "$ref": "#/definitions/Root",
