@@ -1,8 +1,9 @@
 from pathlib import Path
-import click
 
 from yabu_cmd.controller import CommandHandler
 from yabu_cmd.exceptions import PresetNotFoundException, TargetNotFoundException, DestinationNotFoundException, BackupHashException, FormatException, ContentTypeException, TargetMatchException
+
+import click
 
 @click.group()
 @click.option("--config", "-c", default=Path.home().joinpath(".yabu_presets.json"))
@@ -45,10 +46,7 @@ def backup(obj, preset: str, force: bool, keep: bool):
         keep (bool): Whether or not to keep backups beyond the max_backup_count.
 
     Raises:
-        backup: _description_
-
-    Yields:
-        _type_: _description_
+        backup: If a problem is found in the backup generator, the exceptions will be raised here.
     """
     print("Creating backups...")
     handler = CommandHandler(obj['config'])
@@ -113,7 +111,7 @@ def restore(obj, location: str, path: bool):
             continue
     try:
         print(f"restoring {selected_backup.path} to {selected_backup.target}")
-        handler.restore_backup(selected_backup.target, selected_backup)
+        handler.restore_backup(location=selected_backup.target, backup=selected_backup)
     except FileNotFoundError:
         print("The parent path of the target does not exist. Aborting restore.")
     except ContentTypeException:
