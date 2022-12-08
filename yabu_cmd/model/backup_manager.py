@@ -248,6 +248,18 @@ class BackupManager:
             yield new_backup
 
     def restore_backup(self, target: Path, backup: Backup) -> None:
+        """Restore a backup to the given target.
+
+        Args:
+            target (Path): The target path to restore the backup to.
+            backup (Backup): The backup to restore.
+
+        Raises:
+            FileNotFoundError: If the target path's parent does not exist. This prevents accidentally making new directory trees.
+            ContentTypeException: If you are trying to restore a folder backup to a file target, or vice-versa. 
+            Also raised if the content type is not expected.
+            FormatException: If the backup's format is not supported.
+        """
         if not target.parent.exists():
             raise FileNotFoundError(target.parent)
         if (target.is_dir() and backup.content_type == "file") or (target.is_file() and backup.content_type == "folder"):
