@@ -98,6 +98,7 @@ class BackupManager:
 
         Raises:
             NotABackupException: If the metafile cannot be found.
+            FormatException: If the file format is unsupported.
 
         Returns:
             Backup: The backup object.
@@ -130,6 +131,8 @@ class BackupManager:
                 content_hash,
                 content_type,
             )
+        else:
+            raise FormatException(file_path.suffix)
 
     def _create_metafile(
         self,
