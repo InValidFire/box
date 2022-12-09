@@ -24,7 +24,7 @@ class TestCLI:
                         {
                             "path": "bwb",
                             "file_format": "zip",
-                            "date_format": "%d_%m_%y__%H%M%S",
+                            "date_format": "%Y_%m_%d__%H%M%S",
                             "max_backup_count": 3,
                             "name_separator": "-",
                         }

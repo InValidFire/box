@@ -60,7 +60,7 @@ class TestBackupManager:
                         {
                             "path": str(temp_dir),
                             "file_format": "zip",
-                            "date_format": "%d_%m_%y__%H%M%S%f",
+                            "date_format": "%Y_%m_%d__%H%M%S%f",
                             "max_backup_count": 3,
                             "name_separator": "-",
                         }
