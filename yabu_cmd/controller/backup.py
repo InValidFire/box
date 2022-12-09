@@ -2,7 +2,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from datetime import datetime
 
-__all__ = ['Backup']
+__all__ = ["Backup"]
+
 
 @dataclass(frozen=True, repr=True)
 class Backup:

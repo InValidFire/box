@@ -3,7 +3,8 @@ from datetime import datetime
 
 from .destination import Destination
 
-__all__ = ['Preset']
+__all__ = ["Preset"]
+
 
 class Preset:
     def __init__(self, name: str):
@@ -17,7 +18,7 @@ class Preset:
         for target in self._targets:
             output += f"\n\t\t- {target}"
         output += "\n\tDestinations:"
-        for destination in self._destinations: 
+        for destination in self._destinations:
             output += f"\n\t\t- {destination.path}"
             output += f"\n\t\t\tFile Format: {destination.file_format}"
             output += f"\n\t\t\tMax Backup Count: {destination.max_backup_count}"
@@ -37,7 +38,8 @@ class Preset:
 
     @property
     def name(self) -> str:
-        """The name of the preset. Used to identify the preset in the command line tool.
+        """The name of the preset. Used to identify the preset in the command
+        line tool.
 
         Returns:
             str: The preset name.
@@ -46,7 +48,8 @@ class Preset:
 
     @name.setter
     def name(self, new_name) -> None:
-        """The name of the preset. Used to identify the preset in the command line tool.
+        """The name of the preset. Used to identify the preset in the command
+        line tool.
 
         Args:
             new_name (str): The potential new value for the name.
@@ -60,8 +63,9 @@ class Preset:
             self._name = new_name
 
     def add_target(self, target: Path):
-        """Add a target to the list of targets for the preset. 
-        This is the recommended way to add targets to the list, as it implements type checking to the values before they're added.
+        """Add a target to the list of targets for the preset.
+        This is the recommended way to add targets to the list, as it implements
+        type checking to the values before they're added.
 
         Args:
             target (Path): The target to add to the list.
@@ -76,7 +80,8 @@ class Preset:
 
     def add_destination(self, destination: Destination):
         """Add a destination to the list of destinations for the preset.
-        This is the recommended way to add destinations to the list, as it implements type checking to the values before they're added.
+        This is the recommended way to add destinations to the list, as it implements
+        type checking to the values before they're added.
 
         Args:
             destination (Destination): The destination to add to the list.

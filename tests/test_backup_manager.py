@@ -7,10 +7,12 @@ from yabu_cmd.controller import Backup
 from yabu_cmd.model import PresetManager
 from yabu_cmd.model import BackupManager
 
+
 class TestBackupManager:
     @pytest.fixture
     def preset_json(self):
         import json
+
         temp_dir = Path("temp")
         temp_dir.mkdir()
         preset_json_file = Path(temp_dir.joinpath("presets.json"))
@@ -26,11 +28,11 @@ class TestBackupManager:
                             "file_format": "zip",
                             "date_format": "%d_%m_%y__%H%M%S",
                             "max_backup_count": 3,
-                            "name_separator": "-"
+                            "name_separator": "-",
                         }
-                    ]
+                    ],
                 }
-            }
+            },
         }
         preset_json_file.write_text(json.dumps(presets_data, indent=4))
         yield preset_json_file
@@ -40,6 +42,7 @@ class TestBackupManager:
     @pytest.fixture
     def setup_create_backups_force_no_keep(self):
         import json
+
         temp_dir = Path("temp")
         folder = temp_dir.joinpath("folder")
         file = folder.joinpath("file.txt")
@@ -59,9 +62,9 @@ class TestBackupManager:
                             "file_format": "zip",
                             "date_format": "%d_%m_%y__%H%M%S%f",
                             "max_backup_count": 3,
-                            "name_separator": "-"
+                            "name_separator": "-",
                         }
-                    ]
+                    ],
                 },
                 "testFile": {
                     "targets": [str(file.absolute())],
@@ -71,11 +74,11 @@ class TestBackupManager:
                             "file_format": "zip",
                             "date_format": "%d_%m_%y__%H%M%S%f",
                             "max_backup_count": 3,
-                            "name_separator": "-"
+                            "name_separator": "-",
                         }
-                    ]
-                }
-            }
+                    ],
+                },
+            },
         }
         preset_json_file.write_text(json.dumps(presets_data, indent=4))
         yield preset_json_file
@@ -92,12 +95,16 @@ class TestBackupManager:
                     assert backup.name == "file"
                     assert backup.date_format == "%d_%m_%y__%H%M%S%f"
                     assert backup.name_separator == "-"
-                    assert str(backup.target) == str(Path("temp/folder/sub_folder/file.txt").absolute()) # allows Path and its children to equate. :)
+                    assert str(backup.target) == str(
+                        Path("temp/folder/sub_folder/file.txt").absolute()
+                    )  # allows Path and its children to equate. :)
                 if preset.name == "testFolder":
                     assert backup.name == "folder"
                     assert backup.date_format == "%d_%m_%y__%H%M%S%f"
                     assert backup.name_separator == "-"
-                    assert str(backup.target) == str(Path("temp/folder").absolute())  # allows Path and its children to equate. :)
+                    assert str(backup.target) == str(
+                        Path("temp/folder").absolute()
+                    )  # allows Path and its children to equate. :)
 
     def test_create_backups_zip_force_no_keep(self, setup_create_backups_force_no_keep):
         preset_manager = PresetManager(setup_create_backups_force_no_keep)

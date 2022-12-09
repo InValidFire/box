@@ -5,10 +5,12 @@ import pytest
 
 from yabu_cmd.cli import cli
 
+
 class TestCLI:
     @pytest.fixture
     def preset_json(self):
         import json
+
         temp_dir = Path("temp")
         temp_dir.mkdir()
         preset_json_file = Path(temp_dir.joinpath("presets.json"))
@@ -24,16 +26,16 @@ class TestCLI:
                             "file_format": "zip",
                             "date_format": "%d_%m_%y__%H%M%S",
                             "max_backup_count": 3,
-                            "name_separator": "-"
+                            "name_separator": "-",
                         }
-                    ]
+                    ],
                 }
-            }
+            },
         }
         preset_json_file.write_text(json.dumps(presets_data, indent=4))
         yield preset_json_file
         preset_json_file.unlink()
-        temp_dir.rmdir()   
+        temp_dir.rmdir()
 
     def test_presets_cmd(self, preset_json):
         runner = CliRunner()
@@ -51,9 +53,12 @@ class TestCLI:
     def test_presets_cmd_not_found(self):
         runner = CliRunner()
         result = runner.invoke(cli, "--config temp/presets.json presets".split())
-        assert "Uh-Oh! Your config file appears to be missing:" in result.output 
+        assert "Uh-Oh! Your config file appears to be missing:" in result.output
 
     def test_presets_cmd_not_file(self, preset_json):
         runner = CliRunner()
         result = runner.invoke(cli, "--config temp presets".split())
-        assert "The path exists, it doesn't seem to be a .json file though:" in result.output
+        assert (
+            "The path exists, it doesn't seem to be a .json file though:"
+            in result.output
+        )

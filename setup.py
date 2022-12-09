@@ -1,15 +1,15 @@
 from setuptools import setup, find_packages
 
 setup(
-    name='yabu',
-    version='2.0.0a',
+    name="yabu",
+    version="2.0.0a",
     py_modules=find_packages(),
     install_requires=[
-        'Click',
+        "Click",
     ],
     entry_points={
-        'console_scripts': [
-            'yabu = yabu_cmd.cli:cli',
+        "console_scripts": [
+            "yabu = yabu_cmd.cli:cli",
         ],
     },
 )

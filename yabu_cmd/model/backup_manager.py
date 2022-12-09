@@ -10,9 +10,18 @@ from ..controller.backup import Backup
 from ..controller.preset import Preset
 from ..controller.destination import Destination
 
-from ..exceptions import YabuException, FormatException, NotABackupException, BackupHashException, TargetNotFoundException, DestinationNotFoundException, ContentTypeException
+from ..exceptions import (
+    YabuException,
+    FormatException,
+    NotABackupException,
+    BackupHashException,
+    TargetNotFoundException,
+    DestinationNotFoundException,
+    ContentTypeException,
+)
 
-__all__ = ['BackupManager']
+__all__ = ["BackupManager"]
+
 
 def extract_zip_archive(archive_path: Path, destination_path: Path):
     """Extract a zip archive at the given path to the destination path.
@@ -24,6 +33,7 @@ def extract_zip_archive(archive_path: Path, destination_path: Path):
     zf = ZipFile(archive_path)
     zf.extractall(destination_path)
 
+
 def restore_zip_archive(backup: Backup, target: Path):
     """Restore a zip backup to a target path.
 
@@ -33,6 +43,7 @@ def restore_zip_archive(backup: Backup, target: Path):
     """
     extract_zip_archive(backup.path, target)
     target.joinpath(".yabu.meta").unlink()
+
 
 def rmdir(path: Path):
     """Recursively remove a directory and its contents.
@@ -52,6 +63,7 @@ def rmdir(path: Path):
             rmdir(file)
     path.rmdir()
 
+
 def get_content_type(target: Path) -> str:
     """Get the content type of a target path in string format.
 
@@ -69,11 +81,12 @@ def get_content_type(target: Path) -> str:
     elif target.is_file():
         return "file"
     else:
-        raise ValueError(target)  # again... this should never be raised. but just in case.
+        raise ValueError(target)
+
 
 class BackupManager:
     def __new__(cls):
-        if not hasattr(cls, 'instance'):
+        if not hasattr(cls, "instance"):
             cls.instance = super().__new__(cls)
         return cls.instance
 
@@ -94,19 +107,48 @@ class BackupManager:
                 if ".yabu.meta" not in zip_file.namelist():
                     raise NotABackupException(zip_file.filename)
                 else:
-                    metadata = json.loads(zip_file.read(".yabu.meta").decode("utf-8"))
-                    date = datetime.strptime(file_path.stem.split(metadata['name_separator'])[1], metadata['date_format'])
-            return Backup(file_path.stem.split(metadata['name_separator'])[0], file_path.absolute(), metadata['date_format'], metadata['name_separator'], Path(metadata['target']), date, metadata['content_hash'], metadata['content_type'])
+                    metafile = zip_file.read(".yabu.meta").decode("utf-8")
+                    metadata = json.loads(metafile)
 
-    def _create_metafile(self, target: Path, destination: Destination, content_hash: str) -> Path:
-        """Create the metafile of a backup. Stores the backup's target source, the name_separator, the date_format, and the content_hash. 
-        All of this allows the backup to identify itself and present itself correctly to the user.
+                    name_separator = metadata["name_separator"]
+                    date_format = metadata["date_format"]
+                    target = Path(metadata["target"])
+                    content_hash = metadata["content_hash"]
+                    content_type = metadata["content_type"]
+                    name_str = file_path.stem.split(name_separator)[0]
+                    date_str = file_path.stem.split(name_separator)[1]
+                    date = datetime.strptime(date_str, date_format)
 
-        This method does not write the metafile to the archive. That is done in the create_backup method.
+                    backup_path = file_path.absolute()
+            return Backup(
+                name_str,
+                backup_path,
+                date_format,
+                name_separator,
+                target,
+                date,
+                content_hash,
+                content_type,
+            )
+
+    def _create_metafile(
+        self,
+        target: Path,
+        destination: Destination,
+        content_hash: str,
+    ) -> Path:
+        """Create the metafile of a backup. Stores the backup's target source,
+        the name_separator, the date_format, and the content_hash. All of this
+        allows the backup to identify itself and present itself correctly to
+        the user.
+
+        This method does not write the metafile to the archive.
+        That is done in the create_backup method.
 
         Args:
             target (Path): The target the backup was created from.
-            destination (Destination): The destination path. The meta file is created here.
+            destination (Destination): The destination path.
+                The metafile is created here.
             content_hash (str): The hash of the backup's contents.
 
         Returns:
@@ -119,17 +161,24 @@ class BackupManager:
             "name_separator": destination.name_separator,
             "date_format": destination.date_format,
             "content_hash": content_hash,
-            "content_type": get_content_type(target)
+            "content_type": get_content_type(target),
         }
         with temp_path.open("w") as fp:
             json.dump(metadata, fp, indent=4)
         return temp_path
 
-    def _create_zip_archive(self, archive_name: str, target: Path, destination: Destination) -> Path:
-        """Handle the creation of a zip archive from the target path to the destination.
+    def _create_zip_archive(
+        self,
+        archive_name: str,
+        target: Path,
+        destination: Destination,
+    ) -> Path:
+        """Handle the creation of a zip archive from the target path to the
+        destination.
 
         Args:
-            archive_name (str): The name of the archive to be created. Excluding the suffix.
+            archive_name (str): The name of the archive to be created.
+                Excluding the suffix.
             target (Path): The target path.
             destination (Destination): The destination to store the archive.
 
@@ -147,7 +196,7 @@ class BackupManager:
             elif target.is_file():
                 zip_file.write(target, target.relative_to(target.parent))
             else:
-                raise ValueError(target)  # this should never be raised... **crosses fingers**
+                raise ValueError(target)
         md5_hash = hashlib.md5(archive_path.read_bytes()).hexdigest()
         metafile = self._create_metafile(target, destination, md5_hash)
         with ZipFile(archive_path, "a", compression=ZIP_LZMA) as zip_file:
@@ -156,7 +205,8 @@ class BackupManager:
         return archive_path
 
     def _get_backup_date(self, backup: Backup) -> datetime:
-        """Internal method to get the backup date from a backup. Used in the sorting process of backup lists.
+        """Internal method to get the backup date from a backup. Used in the
+        sorting process of backup lists.
 
         Args:
             backup (Backup): The backup.
@@ -165,16 +215,24 @@ class BackupManager:
         """
         return backup.date
 
-    def _get_delete_candidates(self, target: Path, destination: Destination) -> list[Backup]:
-        """Internal method to get all viable delete candidates for an input target and destination.
+    def _get_delete_candidates(
+        self,
+        target: Path,
+        destination: Destination,
+    ) -> list[Backup]:
+        """Internal method to get all viable delete candidates
+        for an input target and destination.
 
-        This method checks all backups found in the destination that were made with the given target.
-        If the number of backups matching this criteria surpasses the destination's max_backup_count, this method returns
-        a list of the oldest backups that could be deleted to make the number of backups fall within range.
+        This method counts all backups found in the destination that were made
+        with the given target. If the number of backups matching this criteria
+        surpasses the destination's max_backup_count, this method returns a
+        list of the oldest backups that could be delete to make the number of
+        backups fall within range.
 
         Args:
-            target (Path): The original source path the backups should be made from.
-            destination (Destination): The destination to get delete candidates for.
+            target (Path): The original source path the backups should be made.
+            destination (Destination): The destination to get delete
+                candidates for.
 
         Returns:
             list[Backup]: The list of candidates for deletion.
@@ -184,24 +242,31 @@ class BackupManager:
             if backup.target == target:
                 target_backups.append(backup)
         if len(target_backups) > destination.max_backup_count:
-            return target_backups[:(len(target_backups)-destination.max_backup_count)]
+            backup_count = len(target_backups) - destination.max_backup_count
+            return target_backups[:backup_count]
         else:
             return []
 
     def _delete_old_backups(self, target: Path, destination: Destination):
-        """Internal method to delete old backups for an input target and destination.
-        Allows for backup rotation.
+        """Internal method to delete old backups for an input target and
+        destination. Allows for backup rotation.
 
-        This method deletes all backups returned from BackupManager._get_delete_candidates().
+        This method deletes all backups returned from
+        BackupManager._get_delete_candidates().
 
         Args:
             target (Path): The target to delete old backups of.
-            destination (Destination): The destination to search for backups in.
+            destination (Destination): The destination to search for backups
+                in.
         """
         for backup in self._get_delete_candidates(target, destination):
             self.delete_backup(backup)
 
-    def _get_backups(self, target: Path, destination: Destination) -> list[Backup]:
+    def _get_backups(
+        self,
+        target: Path,
+        destination: Destination,
+    ) -> list[Backup]:
         """Get all backups of a specific target found in a destination.
 
         Args:
@@ -217,17 +282,23 @@ class BackupManager:
                 backups.append(backup)
         return backups
 
-    def _get_destination_backups(self, destination: Destination) -> list[Backup]:
-        """Internal method to get all backups found in a destination, regardless of their original source target.
+    def _get_destination_backups(
+        self,
+        destination: Destination,
+    ) -> list[Backup]:
+        """Internal method to get all backups found in a destination,
+        regardless of their original source target.
 
         Args:
             destination (Destination): The destination to get backups from.
 
         Raises:
-            UnsupportedFormatException: If the format loaded in the destination is unknown.
+            UnsupportedFormatException: If the format loaded in the
+                destination is unknown.
 
         Returns:
-            list[Backup]: A list of all backups found in the destination, sorted by date in ascending order.
+            list[Backup]: A list of all backups found in the destination,
+                sorted by date in ascending order.
         """
         backups: list[Backup] = []
         if destination.file_format == "zip":
@@ -239,42 +310,73 @@ class BackupManager:
         backups.sort(key=self._get_backup_date)
         return backups
 
-    def create_backups(self, preset: Preset, force=False, keep=False) -> Generator[Backup | YabuException, None, None]:
-        """Trigger backup creation of all available targets in a preset to all available destinations in a preset. Automatically rotates backups to keep within the max_backup_count specified.
-        \nIf `force` is set to True, the content hash check will be disabled and duplicate backups may be created.
-        \nIf `keep` is set to True, the backup rotation will be disabled, allowing you to store backups beyond the max_backup_count.
+    def create_backups(
+        self,
+        preset: Preset,
+        force=False,
+        keep=False,
+    ) -> Generator[Backup | YabuException, None, None]:
+        """Trigger backup creation of all available targets in a preset to all
+        available destinations in a preset. Automatically rotates backups to
+        keep within the max_backup_count specified.
+
+        If `force` is set to
+        True, the content hash check will be disabled and duplicate backups
+        may be created.
+
+        If `keep` is set to True, the backup rotation will
+        be disabled, allowing you to store backups beyond the max_backup_count.
 
         Args:
             preset (Preset): The preset to trigger backup creation for.
-            force (bool, optional): Disable content hash checking and allow duplicate backups. Defaults to False.
+            force (bool, optional): Disable content hash checking and allow
+                duplicate backups. Defaults to False.
             keep (bool, optional): Disable backup rotation. Defaults to False.
 
         Yields:
-            UnsupportedFormatException: If the destination's file_format is unknown.
-            BackupHashException: If the backup's content exactly matches the previous backup. The backup will be deleted to save space.
+            UnsupportedFormatException: If the destination's file_format is
+                unknown.
+            BackupHashException: If the backup's content exactly matches the
+                previous backup. The backup will be deleted to save space.
             TargetNotFoundException: If the backup's target could not be found.
-            DestinationNotFoundException: If the backup's destination could not be found.
+            DestinationNotFoundException: If the backup's destination could
+                not be found.
             Backup: yields a backup of the target stored in the destination.
         """
         for target, destination in product(preset._targets, preset._destinations):
             latest_backup = self.get_latest_backup(destination, target)
-            if not target.exists():  # this target was not available... let's move on.
-                yield TargetNotFoundException(msg=target, target=target, destination=destination)  # cannot raise exceptions or the generator dies. we'll raise them later.
+            if not target.exists():
+                yield TargetNotFoundException(
+                    msg=target, target=target, destination=destination
+                )  # cannot raise exceptions or the generator dies. we'll raise them later.
                 continue
-            if not destination.path.exists():  # this destination was not available... let's move on.
-                yield DestinationNotFoundException(msg=destination.path, target=target, destination=destination)
+            if not destination.path.exists():
+                yield DestinationNotFoundException(
+                    msg=destination.path, target=target, destination=destination
+                )
                 continue
-            archive_name = target.stem + destination.name_separator + datetime.now().strftime(destination.date_format)
-            if destination.file_format == "zip":  # allows us to support more formats later. :)
-                archive_path = self._create_zip_archive(archive_name, target, destination)
+            archive_name = (
+                target.stem
+                + destination.name_separator
+                + datetime.now().strftime(destination.date_format)
+            )
+            # allows us to support more formats later. :)
+            if destination.file_format == "zip":
+                archive_path = self._create_zip_archive(
+                    archive_name, target, destination
+                )
             else:
-                yield FormatException(msg=destination.file_format, target=target, destination=destination)
+                yield FormatException(
+                    msg=destination.file_format, target=target, destination=destination
+                )
                 continue
             new_backup = self.get_backup_from_file(archive_path)
             if not force and latest_backup is not None:
                 if latest_backup.content_hash == new_backup.content_hash:
                     new_backup.path.unlink()
-                    yield BackupHashException(msg=latest_backup.path, target=target, destination=destination)
+                    yield BackupHashException(
+                        msg=latest_backup.path, target=target, destination=destination
+                    )
                     continue
             if not keep:
                 self._delete_old_backups(target, destination)
@@ -288,20 +390,28 @@ class BackupManager:
             backup (Backup): The backup to restore.
 
         Raises:
-            FileNotFoundError: If the target path's parent does not exist. This prevents accidentally making new directory trees.
-            ContentTypeException: If you are trying to restore a folder backup to a file target, or vice-versa. 
+            FileNotFoundError: If the target path's parent does not exist.
+                This prevents accidentally making new directory trees.
+            ContentTypeException: If you are trying to restore a folder
+                backup to a file target, or vice-versa.
             Also raised if the content type is not expected.
             FormatException: If the backup's format is not supported.
         """
         if not target.parent.exists():
             raise FileNotFoundError(target.parent)
-        if (target.is_dir() and backup.content_type == "file") or (target.is_file() and backup.content_type == "folder"):
-            raise ContentTypeException(f"The backup content type '{backup.content_type}' does not match the target Type.")
+        if (target.is_dir() and backup.content_type == "file") or (
+            target.is_file() and backup.content_type == "folder"
+        ):
+            raise ContentTypeException(
+                f"The backup content type '{backup.content_type}' does not match the target Type."
+            )
         if backup.content_type == "folder":
             if target.exists():
                 rmdir(target)
             target.mkdir()
-            if backup.path.suffix == ".zip":  # allows us to support multiple formats later. :)
+            if (
+                backup.path.suffix == ".zip"
+            ):  # allows us to support multiple formats later. :)
                 restore_zip_archive(backup, target)
             else:
                 raise FormatException(backup.path.suffix)
@@ -312,7 +422,9 @@ class BackupManager:
             else:
                 raise FormatException(backup.path.suffix)
         else:
-            raise ContentTypeException(f"The backup content type '{backup.content_type}' is not expected.")
+            raise ContentTypeException(
+                f"The backup content type '{backup.content_type}' is not expected."
+            )
 
     def delete_backup(self, backup: Backup) -> None:
         """Delete the given backup.
@@ -323,8 +435,10 @@ class BackupManager:
         backup.path.unlink()
 
     def delete_old_backups(self, preset: Preset) -> None:
-        """Delete the oldest backups in each destination until the number of backups is placed within the max_backup_count specified.
-        max_backup_count is target specific. ie, if max_backup_count = 3 for the destination, that's three backups of *each* target.
+        """Delete the oldest backups in each destination until the number of
+        backups is placed within the max_backup_count specified.
+        max_backup_count is target specific. ie, if max_backup_count = 3
+        for the destination, that's three backups of *each* target.
 
         Args:
             preset (Preset): preset to determine which backups to delete.
@@ -334,8 +448,10 @@ class BackupManager:
 
     def get_delete_candidates(self, preset: Preset) -> list[Backup]:
         """Return a list of candidates for deletion should it be triggered.
-        Candidates will be determined by age of the backup, and the oldest backups will be eligible first. 
-        Candidates will be selected until the number of backups is placed within the max_backup_count specified for each destination.
+        Candidates will be determined by age of the backup, and the oldest
+        backups will be eligible first. Candidates will be selected until
+        the number of backups is placed within the max_backup_count
+        specified for each destination.
 
         Args:
             preset (Preset): The preset to get deletion candidates for.
@@ -348,12 +464,16 @@ class BackupManager:
             delete_candidates += self._get_delete_candidates(target, destination)
         return delete_candidates
 
-    def get_backups(self, source: Preset | Destination, target: Path = None) -> list[Backup]:
-        """Get all backups from the given source. If target is specified, only get all backups of the target.
+    def get_backups(
+        self, source: Preset | Destination, target: Path = None
+    ) -> list[Backup]:
+        """Get all backups from the given source. If target is specified,
+        only get all backups of the target.
 
         Args:
             source (Preset | Destination): The source to get backups from.
-            target (Path, optional): Target path to limit the backup search. Defaults to None.
+            target (Path, optional): Target path to limit the backup search.
+                Defaults to None.
 
         Raises:
             TypeError: If the source is neither a Preset or a Destination.
@@ -367,7 +487,9 @@ class BackupManager:
             return self._get_backups(target, source)
         elif isinstance(source, Preset) and target is None:
             backups: list[Backup] = []
-            for preset_target, preset_destination in product(source._targets, source._destinations):
+            for preset_target, preset_destination in product(
+                source._targets, source._destinations
+            ):
                 backups += self._get_backups(preset_target, preset_destination)
             backups.sort(key=self._get_backup_date)
             return backups
@@ -378,15 +500,22 @@ class BackupManager:
         else:
             raise TypeError(source)
 
-    def get_latest_backup(self, source: Preset | Destination, target: Path = None) -> Backup:
-        """Get the latest backup from the given source. If target is specified, only get the latest backup of the target.
+    def get_latest_backup(
+        self, source: Preset | Destination, target: Path = None
+    ) -> Backup:
+        """Get the latest backup from the given source. If target is specified,
+        only get the latest backup of the target.
 
-        If a Preset object is given as the source, get the most recent backup of any target it can find in any known destination. 
-        If a Destination object is given as the source, get the most recent backup of any target it can find.
+        If a Preset object is given as the source, get the most recent backup
+        of any target it can find in any known destination.
+        If a Destination object is given as the source, get the most recent
+        backup of any target it can find.
 
         Args:
-            source (Preset | Destination): The source to get the latest backup from.
-            target (Path, optional): Target path to limit the backup search. Defaults to None.
+            source (Preset | Destination): The source to get the latest backup
+                from.
+            target (Path, optional): Target path to limit the backup search.
+                Defaults to None.
 
         Returns:
             Backup: The latest backup

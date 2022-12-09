@@ -1,11 +1,19 @@
 from pathlib import Path
 
-VALID_FILE_FORMATS = ['zip']
+VALID_FILE_FORMATS = ["zip"]
 
-__all__ = ['Destination']
+__all__ = ["Destination"]
+
 
 class Destination:
-    def __init__(self, path: Path, date_format: str = "%d_%m_%y__%H%M%S", name_separator: str = "-", max_backup_count: int = 3, file_format: str = "zip"):
+    def __init__(
+        self,
+        path: Path,
+        date_format: str = "%d_%m_%y__%H%M%S",
+        name_separator: str = "-",
+        max_backup_count: int = 3,
+        file_format: str = "zip",
+    ):
         self.path = path
         self.date_format = date_format
         self.name_separator = name_separator  # separates the original file name from the date in the archive name
@@ -31,12 +39,14 @@ class Destination:
 
     @property
     def path(self) -> Path:
-        """The destination path, or where the backup archive will be stored. This should be a folder."""
+        """The destination path, or where the backup archive will be stored.
+        This should be a folder."""
         return self._path
 
     @path.setter
     def path(self, new_path: Path) -> Path:
-        """The destination path, or where the backup archive will be stored. This should be a folder."""
+        """The destination path, or where the backup archive will be stored.
+        This should be a folder."""
         if not isinstance(new_path, Path):
             raise TypeError(new_path)
         if not new_path.is_dir():
@@ -46,8 +56,9 @@ class Destination:
 
     @property
     def max_backup_count(self) -> int:
-        """The max backup count, or how many backups should be stored in this destination before the oldest backups are deleted. 
-        This can be overwritten with the -k argument.
+        """The max backup count, or how many backups should be stored in this
+        destination before the oldest backups are deleted. This can be
+        overwritten with the -k argument.
 
         Returns:
             int: The max backup count.
@@ -55,11 +66,13 @@ class Destination:
         return self._max_backup_count
 
     @max_backup_count.setter
-    def max_backup_count(self, new_max_backup_count):
-        """The max backup count, or how many backups should be stored in this destination before the oldest backups are deleted.
+    def max_backup_count(self, new_max_backup_count: int):
+        """The max backup count, or how many backups should be stored in this
+        destination before the oldest backups are deleted.
 
         Args:
-            new_max_backup_count (object): The potential new value for the max_backup_count.
+            new_max_backup_count (int): The potential new value for the
+                max_backup_count.
 
         Raises:
             TypeError: If the new_max_backup_count is not an integer.
@@ -98,7 +111,8 @@ class Destination:
 
     @property
     def name_separator(self) -> str:
-        """The separator string used to separate the backup name from the backup date in the archive name.
+        """The separator string used to separate the backup name from the backup
+        date in the archive name.
 
         Returns:
             str: The name separator.
@@ -107,7 +121,8 @@ class Destination:
 
     @name_separator.setter
     def name_separator(self, new_separator: str):
-        """The name separator string used to separate the backup name from the backup date in the archive name.
+        """The name separator string used to separate the backup name from the
+        backup date in the archive name.
 
         Args:
             new_separator (str): The potential new value for the name_separator.

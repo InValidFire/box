@@ -7,6 +7,7 @@ from yabu_cmd.controller.preset import Preset
 from yabu_cmd.controller.destination import Destination
 from yabu_cmd.exceptions.exceptions import PresetNotFoundException
 
+
 class TestPresetManager:
     @pytest.fixture
     def new_preset(self):
@@ -18,6 +19,7 @@ class TestPresetManager:
     @pytest.fixture
     def preset_json(self):
         import json
+
         temp_dir = Path("temp")
         temp_dir.mkdir()
         preset_json_file = Path(temp_dir.joinpath("presets.json"))
@@ -33,11 +35,11 @@ class TestPresetManager:
                             "file_format": "zip",
                             "date_format": "%d_%m_%y__%H%M%S",
                             "max_backup_count": 3,
-                            "name_separator": "-"
+                            "name_separator": "-",
                         }
-                    ]
+                    ],
                 }
-            }
+            },
         }
         preset_json_file.write_text(json.dumps(presets_data, indent=4))
         yield preset_json_file
@@ -57,7 +59,7 @@ class TestPresetManager:
         test_preset._targets.append(Path("awa"))
         destination = Destination(Path("bwb"))
         test_preset._destinations.append(destination)
-        assert preset_manager['minecraft'] == test_preset, ""
+        assert preset_manager["minecraft"] == test_preset, ""
 
     def test_get_preset(self, preset_json):
         preset_manager = PresetManager(preset_json)
@@ -83,7 +85,7 @@ class TestPresetManager:
         preset.add_destination(Destination(Path("dwd")))
         preset_manager.save_preset(preset)
         # try to get saved preset back
-        assert preset_manager['books'] == new_preset
+        assert preset_manager["books"] == new_preset
 
     def test_save_preset_incorrect_destination(self, preset_json):
         preset_manager = PresetManager(preset_json)
