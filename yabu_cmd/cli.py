@@ -78,7 +78,7 @@ def backup(obj, preset: str, force: bool, keep: bool):
             )
         except DestinationNotFoundException as e:
             print(
-                f"Backup Failed:\n\Destination not found:\n\tTarget: {e.target}\n\tDestination: {e.destination}"
+                f"Backup Failed:\n\tDestination not found:\n\tTarget: {e.target}\n\tDestination: {e.destination}"
             )
         except BackupHashException as e:
             print(
@@ -86,7 +86,7 @@ def backup(obj, preset: str, force: bool, keep: bool):
             )
         except FormatException as e:
             print(
-                f"Backup Failed:\n\tBackup format unsupported\n\tTarget: {e.target}\n\Destination: {e.destination}"
+                f"Backup Failed:\n\tBackup format unsupported\n\tTarget: {e.target}\n\tDestination: {e.destination}"
             )
         else:
             print(backup)
