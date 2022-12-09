@@ -34,7 +34,8 @@ class Preset:
                 return False
             if self.name != other_preset.name:
                 return False
-        return True
+            return True
+        return False
 
     @property
     def name(self) -> str:

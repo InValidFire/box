@@ -9,7 +9,7 @@ class Destination:
     def __init__(
         self,
         path: Path,
-        date_format: str = "%d_%m_%y__%H%M%S",
+        date_format: str = "%Y_%m_%d__%H%M%S",
         name_separator: str = "-",
         max_backup_count: int = 3,
         file_format: str = "zip",
@@ -32,7 +32,8 @@ class Destination:
                 return False
             if self.file_format != other_destination.file_format:
                 return False
-        return True
+            return True
+        return False
 
     def __str__(self) -> str:
         return str(self.path)
@@ -49,8 +50,6 @@ class Destination:
         This should be a folder."""
         if not isinstance(new_path, Path):
             raise TypeError(new_path)
-        if not new_path.is_dir():
-            raise ValueError(new_path)
         else:
             self._path = new_path
 
