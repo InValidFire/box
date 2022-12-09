@@ -468,7 +468,8 @@ class BackupManager:
         self, source: Preset | Destination, target: Path = None
     ) -> list[Backup]:
         """Get all backups from the given source. If target is specified,
-        only get all backups of the target.
+        only get all backups of the target. Backups are sorted in ascending
+        order.
 
         Args:
             source (Preset | Destination): The source to get backups from.
