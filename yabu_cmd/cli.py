@@ -93,10 +93,10 @@ def backup(obj, preset: str, force: bool, keep: bool):
 
 
 @cli.command()
-@click.option("--dir", "-d", type=bool, default=False, is_flag=True)
+@click.option("--directory", "-d", type=bool, default=False, is_flag=True)
 @click.argument("location")
 @click.pass_obj
-def restore(obj, location: str, path: bool):
+def restore(obj, location: str, directory: bool):
     """Restore a backup to its target.
 
     Args:
@@ -114,14 +114,14 @@ def restore(obj, location: str, path: bool):
     """
     handler = CommandHandler(obj["config"])
     try:
-        if path:
+        if directory:
             location = Path(location)
     except PresetNotFoundException:
         print(f"The requested preset '{obj['location']}' is not found.")
 
     backups = handler.list_backups(location)
     selected_backup = None
-    while selected_backup == None:
+    while selected_backup is None:
         try:
             print("\nBackups:")
             for i, backup in enumerate(backups, start=1):
