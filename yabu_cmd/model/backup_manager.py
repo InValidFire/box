@@ -157,8 +157,6 @@ class BackupManager:
         Returns:
             Path: The path of the metafile.
         """
-        temp_path = destination.path.joinpath(".yabu.meta")
-        temp_path.touch()
         metadata = {
             "target": str(target),
             "name_separator": destination.name_separator,
@@ -166,16 +164,14 @@ class BackupManager:
             "content_hash": content_hash,
             "content_type": get_content_type(target),
         }
-        with temp_path.open("w") as fp:
-            json.dump(metadata, fp, indent=4)
-        return temp_path
+        return json.dumps(metadata, indent=4)
 
     def _create_zip_archive(
         self,
         archive_name: str,
         target: Path,
         destination: Destination,
-        md5_hash: str
+        metafile_str: str
     ) -> Path:
         """Handle the creation of a zip archive from the target path to the
         destination.
@@ -201,10 +197,8 @@ class BackupManager:
                 zip_file.write(target, target.relative_to(target.parent))
             else:
                 raise ValueError(target)
-        metafile = self._create_metafile(target, destination, md5_hash)
         with ZipFile(archive_path, "a", compression=ZIP_LZMA) as zip_file:
-            zip_file.write(metafile, metafile.relative_to(destination.path))
-        metafile.unlink()
+            zip_file.writestr(".yabu.meta", metafile_str)
         return archive_path
 
     def _get_backup_date(self, backup: Backup) -> datetime:
@@ -362,6 +356,7 @@ class BackupManager:
         for target, destination in product(preset._targets, preset._destinations):
             latest_backup = self.get_latest_backup(destination, target)
             md5_hash = self.create_md5_hash(target)
+            metafile_str = self._create_metafile(target, destination, md5_hash)
             if not force and latest_backup is not None:
                 if latest_backup.content_hash == md5_hash:
                     yield BackupHashException(
@@ -386,7 +381,7 @@ class BackupManager:
             # allows us to support more formats later. :)
             if destination.file_format == "zip":
                 archive_path = self._create_zip_archive(
-                    archive_name, target, destination, md5_hash
+                    archive_name, target, destination, metafile_str
                 )
             else:
                 yield FormatException(
