@@ -175,6 +175,7 @@ class BackupManager:
         archive_name: str,
         target: Path,
         destination: Destination,
+        md5_hash: str
     ) -> Path:
         """Handle the creation of a zip archive from the target path to the
         destination.
@@ -200,7 +201,6 @@ class BackupManager:
                 zip_file.write(target, target.relative_to(target.parent))
             else:
                 raise ValueError(target)
-        md5_hash = hashlib.md5(archive_path.read_bytes()).hexdigest()
         metafile = self._create_metafile(target, destination, md5_hash)
         with ZipFile(archive_path, "a", compression=ZIP_LZMA) as zip_file:
             zip_file.write(metafile, metafile.relative_to(destination.path))
@@ -313,6 +313,19 @@ class BackupManager:
         backups.sort(key=self._get_backup_date)
         return backups
 
+    def create_md5_hash(self, target: Path):
+        md5_hash = hashlib.md5()
+        if target.is_dir():
+            for item in target.glob("**/*"):
+                if item.is_dir():  # can't read bytes of a folder.
+                    continue
+                md5_hash.update(item.read_bytes())
+        elif target.is_file():
+            md5_hash.update(target.read_bytes())
+        else:
+            raise ValueError(target)
+        return md5_hash.hexdigest()
+
     def create_backups(
         self,
         preset: Preset,
@@ -348,6 +361,13 @@ class BackupManager:
         """
         for target, destination in product(preset._targets, preset._destinations):
             latest_backup = self.get_latest_backup(destination, target)
+            md5_hash = self.create_md5_hash(target)
+            if not force and latest_backup is not None:
+                if latest_backup.content_hash == md5_hash:
+                    yield BackupHashException(
+                        msg=latest_backup.path, target=target, destination=destination
+                    )
+                    continue
             if not target.exists():
                 yield TargetNotFoundException(
                     msg=target, target=target, destination=destination
@@ -366,24 +386,16 @@ class BackupManager:
             # allows us to support more formats later. :)
             if destination.file_format == "zip":
                 archive_path = self._create_zip_archive(
-                    archive_name, target, destination
+                    archive_name, target, destination, md5_hash
                 )
             else:
                 yield FormatException(
                     msg=destination.file_format, target=target, destination=destination
                 )
                 continue
-            new_backup = self.get_backup_from_file(archive_path)
-            if not force and latest_backup is not None:
-                if latest_backup.content_hash == new_backup.content_hash:
-                    new_backup.path.unlink()
-                    yield BackupHashException(
-                        msg=latest_backup.path, target=target, destination=destination
-                    )
-                    continue
             if not keep:
                 self._delete_old_backups(target, destination)
-            yield new_backup
+            yield self.get_backup_from_file(archive_path)
 
     def restore_backup(self, target: Path, backup: Backup) -> None:
         """Restore a backup to the given target.
