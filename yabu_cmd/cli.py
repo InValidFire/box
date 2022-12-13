@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from yabu_cmd.controller import CommandHandler
+from yabu_cmd.controller import CommandHandler, ProgressInfo, Backup
 from yabu_cmd.exceptions import (
     PresetNotFoundException,
     TargetNotFoundException,
@@ -12,6 +12,7 @@ from yabu_cmd.exceptions import (
 )
 
 import click
+from tqdm import tqdm
 
 
 @click.group()
@@ -65,11 +66,26 @@ def backup(obj, preset: str, force: bool, keep: bool):
     """
     print("Creating backups...")
     handler = CommandHandler(obj["config"])
-    print("Please wait for backups to be created: ")
-    for backup in handler.create_backups(preset, force, keep):
+    progress_bar = tqdm()
+    items: list[Backup, Exception] = []
+    for item in handler.create_backups(preset, force, keep):
+        if isinstance(item, ProgressInfo):  # handle progress bar stuff
+            if item.total is not None:
+                progress_bar.reset(total=item.total)
+            progress_bar.set_description(f"{item.msg}")
+            progress_bar.update(item.count)
+        else:
+            items.append(item)
+    progress_bar.close()
+
+    for item in items:
         try:
-            if isinstance(backup, Exception):
-                raise backup  # backup generator might yield exceptions since it can't raise them personally.
+            if isinstance(item, Exception):
+                raise item  # backup generator might yield exceptions since it can't raise them personally.
+            elif isinstance(item, Backup):
+                print(item)
+            else:
+                raise TypeError(item)
         except PresetNotFoundException:
             print(f"The requested preset '{obj['location']}' is not found.")
         except TargetNotFoundException as e:
@@ -88,8 +104,6 @@ def backup(obj, preset: str, force: bool, keep: bool):
             print(
                 f"Backup Failed:\n\tBackup format unsupported\n\tTarget: {e.target}\n\tDestination: {e.destination}"
             )
-        else:
-            print(backup)
 
 
 @cli.command()

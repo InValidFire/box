@@ -9,6 +9,7 @@ import hashlib
 from ..controller.backup import Backup
 from ..controller.preset import Preset
 from ..controller.destination import Destination
+from ..controller.progress_info import ProgressInfo
 
 from ..exceptions import (
     YabuException,
@@ -21,6 +22,15 @@ from ..exceptions import (
 )
 
 __all__ = ["BackupManager"]
+
+
+def count_files(path: Path):
+    if not path.is_dir():
+        raise ValueError(path)
+    count = 0
+    for _ in path.glob("**/*"):
+        count += 1
+    return count
 
 
 def extract_zip_archive(archive_path: Path, destination_path: Path):
@@ -172,7 +182,7 @@ class BackupManager:
         target: Path,
         destination: Destination,
         metafile_str: str
-    ) -> Path:
+    ) -> Generator[Path | ProgressInfo, None, None]:
         """Handle the creation of a zip archive from the target path to the
         destination.
 
@@ -191,15 +201,22 @@ class BackupManager:
         archive_path = destination.path.joinpath(archive_name + ".zip")
         with ZipFile(archive_path, mode="w", compression=ZIP_LZMA) as zip_file:
             if target.is_dir():
+                file_count = count_files(target) + 1  # adding one for the .yabu.meta
+                yield ProgressInfo(0, msg=f"Zipping {target}", total=file_count)
                 for item in target.glob("**/*"):
+                    yield ProgressInfo(msg=f"Zipping {target.name} | {item.relative_to(target)}")
                     zip_file.write(item, item.relative_to(target))
             elif target.is_file():
+                file_count = 2
+                yield ProgressInfo(0, msg=f"Zipping {target}", total=file_count)
                 zip_file.write(target, target.relative_to(target.parent))
+                yield ProgressInfo(msg=f"Zipping {target}")
             else:
                 raise ValueError(target)
         with ZipFile(archive_path, "a", compression=ZIP_LZMA) as zip_file:
             zip_file.writestr(".yabu.meta", metafile_str)
-        return archive_path
+            yield ProgressInfo(msg="Zipping .yabu.meta")
+        yield archive_path
 
     def _get_backup_date(self, backup: Backup) -> datetime:
         """Internal method to get the backup date from a backup. Used in the
@@ -325,7 +342,7 @@ class BackupManager:
         preset: Preset,
         force=False,
         keep=False,
-    ) -> Generator[Backup | YabuException, None, None]:
+    ) -> Generator[Backup | YabuException | ProgressInfo, None, None]:
         """Trigger backup creation of all available targets in a preset to all
         available destinations in a preset. Automatically rotates backups to
         keep within the max_backup_count specified.
@@ -355,8 +372,10 @@ class BackupManager:
         """
         for target, destination in product(preset._targets, preset._destinations):
             latest_backup = self.get_latest_backup(destination, target)
+            yield ProgressInfo(0, f"MD5 Check: {target.name}", total=1)
             md5_hash = self.create_md5_hash(target)
             metafile_str = self._create_metafile(target, destination, md5_hash)
+            yield ProgressInfo(1, f"MD5 Check: {target.name}")
             if not force and latest_backup is not None:
                 if latest_backup.content_hash == md5_hash:
                     yield BackupHashException(
@@ -380,9 +399,13 @@ class BackupManager:
             )
             # allows us to support more formats later. :)
             if destination.file_format == "zip":
-                archive_path = self._create_zip_archive(
+                for item in self._create_zip_archive(
                     archive_name, target, destination, metafile_str
-                )
+                ):
+                    if isinstance(item, ProgressInfo):  # passes zip progress to the view.
+                        yield item
+                    elif isinstance(item, Path):
+                        archive_path = item
             else:
                 yield FormatException(
                     msg=destination.file_format, target=target, destination=destination

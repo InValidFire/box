@@ -1,8 +1,11 @@
 from pathlib import Path
 
+from typing import Generator
+
 from ..model.preset_manager import PresetManager
 from .preset import Preset
 from .backup import Backup
+from .progress_info import ProgressInfo
 from .destination import Destination
 from ..model.backup_manager import BackupManager
 
@@ -72,7 +75,7 @@ class CommandHandler:
 
     def create_backups(
         self, preset_name: str, force: bool, keep: bool
-    ) -> list[Backup | YabuException]:
+    ) -> Generator[Backup | YabuException | ProgressInfo, None, None]:
         """Create backups of all targets in the preset.
         A backup is stored in each destination following any destination specific
         settings.
@@ -94,15 +97,15 @@ class CommandHandler:
             keep (bool): If true, the backup process will not delete old backups.
 
         Yields:
-            Generator[Backup | Exception, None, None]: _description_
+            Backup: the backup created.
+            YabuException: any exceptions raised from failed backups.
+            ProgressInfo: updates to the backup progress from the model.
         """
         backup_manager = BackupManager()
         preset_manager = PresetManager(self.config_path)
         preset = preset_manager[preset_name]
-        backups: list[Backup | YabuException] = []
-        for backup in backup_manager.create_backups(preset, force=force, keep=keep):
-            backups.append(backup)
-        return backups
+        for item in backup_manager.create_backups(preset, force=force, keep=keep):
+            yield item
 
     def delete_backup(self, backup_path: Path) -> None:
         """Delete a backup matching the given file path.
