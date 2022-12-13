@@ -3,7 +3,7 @@ from pathlib import Path
 import shutil
 import pytest
 
-from yabu_cmd.controller import Backup
+from yabu_cmd.controller import Backup, ProgressInfo
 from yabu_cmd.model import PresetManager
 from yabu_cmd.model import BackupManager
 
@@ -89,18 +89,21 @@ class TestBackupManager:
         presets = preset_manager.get_presets()
         backup_manager = BackupManager()
         for preset in presets:
+            print(preset)
             for backup in backup_manager.create_backups(preset, False, False):
+                if isinstance(backup, ProgressInfo):
+                    continue
                 assert isinstance(backup, Backup)
                 if preset.name == "testFile":
                     assert backup.name == "file"
-                    assert backup.date_format == "%d_%m_%y__%H%M%S%f"
+                    assert backup.date_format == "%Y_%m_%d__%H%M%S%f"
                     assert backup.name_separator == "-"
                     assert str(backup.target) == str(
                         Path("temp/folder/sub_folder/file.txt").absolute()
                     )  # allows Path and its children to equate. :)
                 if preset.name == "testFolder":
                     assert backup.name == "folder"
-                    assert backup.date_format == "%d_%m_%y__%H%M%S%f"
+                    assert backup.date_format == "%Y_%m_%d__%H%M%S%f"
                     assert backup.name_separator == "-"
                     assert str(backup.target) == str(
                         Path("temp/folder").absolute()
@@ -113,6 +116,8 @@ class TestBackupManager:
         for i in range(4):
             for preset in presets:
                 for backup in backup_manager.create_backups(preset, True, False):
+                    if isinstance(backup, ProgressInfo):
+                        continue
                     assert isinstance(backup, Backup)
         testFile_count = 0
         testFolder_count = 0
@@ -131,6 +136,8 @@ class TestBackupManager:
             print(i)
             for preset in presets:
                 for backup in backup_manager.create_backups(preset, True, True):
+                    if isinstance(backup, ProgressInfo):
+                        continue
                     assert isinstance(backup, Backup)
         testFile_count = 0
         testFolder_count = 0

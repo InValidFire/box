@@ -59,7 +59,7 @@ class TestPresetManager:
         test_preset._targets.append(Path("awa"))
         destination = Destination(Path("bwb"))
         test_preset._destinations.append(destination)
-        assert preset_manager["minecraft"] == test_preset, ""
+        assert preset_manager["minecraft"] == test_preset
 
     def test_get_preset(self, preset_json):
         preset_manager = PresetManager(preset_json)
