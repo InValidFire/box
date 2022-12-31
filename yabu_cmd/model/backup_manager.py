@@ -181,7 +181,7 @@ class BackupManager:
         archive_name: str,
         target: Path,
         destination: Destination,
-        metafile_str: str
+        metafile_str: str,
     ) -> Generator[Path | ProgressInfo, None, None]:
         """Handle the creation of a zip archive from the target path to the
         destination.
@@ -204,7 +204,9 @@ class BackupManager:
                 file_count = count_files(target) + 1  # adding one for the .yabu.meta
                 yield ProgressInfo(0, msg=f"Zipping {target}", total=file_count)
                 for item in target.glob("**/*"):
-                    yield ProgressInfo(msg=f"Zipping {target.name} | {item.relative_to(target)}")
+                    yield ProgressInfo(
+                        msg=f"Zipping {target.name} | {item.relative_to(target)}"
+                    )
                     zip_file.write(item, item.relative_to(target))
             elif target.is_file():
                 file_count = 2
@@ -402,7 +404,9 @@ class BackupManager:
                 for item in self._create_zip_archive(
                     archive_name, target, destination, metafile_str
                 ):
-                    if isinstance(item, ProgressInfo):  # passes zip progress to the view.
+                    if isinstance(
+                        item, ProgressInfo
+                    ):  # passes zip progress to the view.
                         yield item
                     elif isinstance(item, Path):
                         archive_path = item
