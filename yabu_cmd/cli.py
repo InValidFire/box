@@ -99,7 +99,7 @@ def backup(obj, preset: str, force: bool, keep: bool):
             )
         except BackupHashException as e:
             print(
-                f"Backup Failed:\n\tBackup hash matched latest backup in destination path.\n\tTarget: {e.target}\n\tDestination: {e.destination}"
+                f"Backup Skipped:\n\tBackup hash matched latest backup in destination path.\n\tTarget: {e.target}\n\tDestination: {e.destination}"
             )
         except FormatException as e:
             print(
