@@ -28,6 +28,10 @@ class BackupException(YabuException):
         super().__init__(msg)
 
 
+class BackupAbortedException(BackupException):
+    pass
+
+
 class PresetNotFoundException(PresetException):
     pass
 

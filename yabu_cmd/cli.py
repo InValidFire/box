@@ -9,6 +9,7 @@ from yabu_cmd.exceptions import (
     FormatException,
     ContentTypeException,
     TargetMatchException,
+    BackupAbortedException,
 )
 
 import click
@@ -105,6 +106,8 @@ def backup(obj, preset: str, force: bool, keep: bool):
             print(
                 f"Backup Failed:\n\tBackup format unsupported\n\tTarget: {e.target}\n\tDestination: {e.destination}"
             )
+        except BackupAbortedException as e:
+            print(f"Backup Aborted:\n\tTarget: {e.target}\n\tDestination: {e.destination}")
 
 
 @cli.command()

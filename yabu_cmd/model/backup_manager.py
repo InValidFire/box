@@ -19,6 +19,7 @@ from ..exceptions import (
     TargetNotFoundException,
     DestinationNotFoundException,
     ContentTypeException,
+    BackupAbortedException,
 )
 
 __all__ = ["BackupManager"]
@@ -202,25 +203,27 @@ class BackupManager:
             Path: The path of the newly created archive.
         """
         archive_path = destination.path.joinpath(archive_name + ".zip")
-        with ZipFile(archive_path, mode="w", compression=ZIP_DEFLATED) as zip_file:
-            if target.is_dir():
-                file_count = count_files(target) + 1  # adding one for the .yabu.meta
-                yield ProgressInfo(0, msg=f"Zipping {target}", total=file_count)
-                for item in target.glob("**/*"):
-                    yield ProgressInfo(
-                        msg=f"Zipping {target.name} | {item.relative_to(target)}"
-                    )
-                    zip_file.write(item, item.relative_to(target))
-            elif target.is_file():
-                file_count = 2
-                yield ProgressInfo(0, msg=f"Zipping {target}", total=file_count)
-                zip_file.write(target, target.relative_to(target.parent))
-                yield ProgressInfo(msg=f"Zipping {target}")
-            else:
-                raise ValueError(target)
-            zip_file.writestr(".yabu.meta", metafile_str)
-            yield ProgressInfo(msg="Zipping .yabu.meta")
-        yield archive_path
+        try:
+            with ZipFile(archive_path, mode="w", compression=ZIP_DEFLATED) as zip_file:
+                if target.is_dir():
+                    file_count = count_files(target) + 1  # adding one for the .yabu.meta
+                    yield ProgressInfo(0, msg=f"Zipping {target}", total=file_count)
+                    for item in target.glob("**/*"):
+                        yield ProgressInfo(
+                            msg=f"Zipping {target.name} | {item.relative_to(target)}"
+                        )
+                        zip_file.write(item, item.relative_to(target))
+                elif target.is_file():
+                    file_count = 2
+                    yield ProgressInfo(0, msg=f"Zipping {target}", total=file_count)
+                    zip_file.write(target, target.relative_to(target.parent))
+                    yield ProgressInfo(msg=f"Zipping {target}")
+                else:
+                    raise ValueError(target)
+                zip_file.writestr(".yabu.meta", metafile_str)
+                yield ProgressInfo(msg="Zipping .yabu.meta")
+        finally:
+            yield archive_path
 
     def _get_backup_date(self, backup: Backup) -> datetime:
         """Internal method to get the backup date from a backup. Used in the
@@ -411,25 +414,31 @@ class BackupManager:
                 + destination.name_separator
                 + datetime.now().strftime(destination.date_format)
             )
-            # allows us to support more formats later. :)
-            if destination.file_format == "zip":
-                for item in self._create_zip_archive(
-                    archive_name, target, destination, metafile_str
-                ):
-                    if isinstance(
-                        item, ProgressInfo
-                    ):  # passes zip progress to the view.
-                        yield item
-                    elif isinstance(item, Path):
-                        archive_path = item
-            else:
-                yield FormatException(
-                    msg=destination.file_format, target=target, destination=destination
-                )
-                continue
-            if not keep:
-                self._delete_old_backups(target, destination)
-            yield self.get_backup_from_file(archive_path)
+            try:
+                if destination.file_format == "zip":  # allows us to support more formats later
+                    for item in self._create_zip_archive(
+                        archive_name, target, destination, metafile_str
+                    ):
+                        if isinstance(
+                            item, ProgressInfo
+                        ):  # passes zip progress to the view.
+                            yield item
+                        elif isinstance(item, Path):
+                            archive_path = item
+                else:
+                    yield FormatException(
+                        msg=destination.file_format, target=target, destination=destination
+                    )
+                    continue
+                if not keep:
+                    self._delete_old_backups(target, destination)
+                yield self.get_backup_from_file(archive_path)
+            except KeyboardInterrupt:
+                archive_path.unlink()
+                yield BackupAbortedException("The backup was aborted", target, destination)
+            except Exception:  # keep from storing backups that failed for other means.
+                archive_path.unlink()
+                raise
 
     def restore_backup(self, target: Path, backup: Backup) -> None:
         """Restore a backup to the given target.
