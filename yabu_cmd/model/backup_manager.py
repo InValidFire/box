@@ -31,7 +31,7 @@ def count_files(path: Path, files_only=False):
     for _ in path.glob("**/*"):
         if files_only and _.is_file():
             count += 1
-        else:
+        elif not files_only:
             count += 1
     return count
 
@@ -321,8 +321,11 @@ class BackupManager:
         backups: list[Backup] = []
         if destination.file_format == "zip":
             for path in destination.path.glob("*.zip"):
-                backup = self.get_backup_from_file(path)
-                backups.append(backup)
+                try:
+                    backup = self.get_backup_from_file(path)
+                    backups.append(backup)
+                except NotABackupException:
+                    continue
         else:
             raise FormatException(destination.file_format)
         backups.sort(key=self._get_backup_date)
