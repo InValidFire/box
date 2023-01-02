@@ -72,7 +72,8 @@ def backup(obj, preset: str, force: bool, keep: bool):
         if isinstance(item, ProgressInfo):  # handle progress bar stuff
             if item.total is not None:
                 progress_bar.reset(total=item.total)
-            progress_bar.set_description(f"{item.msg}")
+            if item.msg is not None:
+                progress_bar.set_description(f"{item.msg}")
             progress_bar.update(item.count)
         else:
             items.append(item)

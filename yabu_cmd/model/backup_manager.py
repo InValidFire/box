@@ -2,7 +2,7 @@ from pathlib import Path
 from typing import Generator
 from itertools import product
 from datetime import datetime
-from zipfile import ZipFile, ZIP_LZMA
+from zipfile import ZipFile, ZIP_DEFLATED
 import json
 import hashlib
 
@@ -24,12 +24,15 @@ from ..exceptions import (
 __all__ = ["BackupManager"]
 
 
-def count_files(path: Path):
+def count_files(path: Path, files_only=False):
     if not path.is_dir():
         raise ValueError(path)
     count = 0
     for _ in path.glob("**/*"):
-        count += 1
+        if files_only and _.is_file():
+            count += 1
+        else:
+            count += 1
     return count
 
 
@@ -199,7 +202,7 @@ class BackupManager:
             Path: The path of the newly created archive.
         """
         archive_path = destination.path.joinpath(archive_name + ".zip")
-        with ZipFile(archive_path, mode="w", compression=ZIP_LZMA) as zip_file:
+        with ZipFile(archive_path, mode="w", compression=ZIP_DEFLATED) as zip_file:
             if target.is_dir():
                 file_count = count_files(target) + 1  # adding one for the .yabu.meta
                 yield ProgressInfo(0, msg=f"Zipping {target}", total=file_count)
@@ -215,7 +218,6 @@ class BackupManager:
                 yield ProgressInfo(msg=f"Zipping {target}")
             else:
                 raise ValueError(target)
-        with ZipFile(archive_path, "a", compression=ZIP_LZMA) as zip_file:
             zip_file.writestr(".yabu.meta", metafile_str)
             yield ProgressInfo(msg="Zipping .yabu.meta")
         yield archive_path
@@ -326,18 +328,22 @@ class BackupManager:
         backups.sort(key=self._get_backup_date)
         return backups
 
-    def create_md5_hash(self, target: Path):
+    def create_md5_hash(self, target: Path) -> Generator[ProgressInfo | str, None, None]:
         md5_hash = hashlib.md5()
         if target.is_dir():
+            file_count = count_files(target, files_only=True)
+            yield ProgressInfo(count=0, msg="Checking MD5 Hash", total=file_count)
             for item in target.glob("**/*"):
                 if item.is_dir():  # can't read bytes of a folder.
                     continue
                 md5_hash.update(item.read_bytes())
+                yield ProgressInfo(msg="Checking MD5 Hash")
         elif target.is_file():
             md5_hash.update(target.read_bytes())
+            yield ProgressInfo(count=1, msg="Checking MD5 Hash", total=1)
         else:
             raise ValueError(target)
-        return md5_hash.hexdigest()
+        yield md5_hash.hexdigest()
 
     def create_backups(
         self,
@@ -374,10 +380,13 @@ class BackupManager:
         """
         for target, destination in product(preset._targets, preset._destinations):
             latest_backup = self.get_latest_backup(destination, target)
-            yield ProgressInfo(0, f"MD5 Check: {target.name}", total=1)
-            md5_hash = self.create_md5_hash(target)
+            md5_hash = None
+            for i in self.create_md5_hash(target):
+                if isinstance(i, ProgressInfo):
+                    yield i
+                elif isinstance(i, str):
+                    md5_hash = i
             metafile_str = self._create_metafile(target, destination, md5_hash)
-            yield ProgressInfo(1, f"MD5 Check: {target.name}")
             if not force and latest_backup is not None:
                 if latest_backup.content_hash == md5_hash:
                     yield BackupHashException(
