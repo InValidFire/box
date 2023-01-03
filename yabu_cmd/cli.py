@@ -111,33 +111,37 @@ def backup(obj, preset: str, force: bool, keep: bool):
 
 
 @cli.command()
-@click.option("--directory", "-d", type=bool, default=False, is_flag=True)
-@click.argument("location")
+@click.option("--path", "-p", type=bool, is_flag=True, default=False)
+@click.argument("source", required=True)
+@click.argument("destination", required=False)
 @click.pass_obj
-def restore(obj, location: str, directory: bool):
-    """Restore a backup to its target.
+def restore(obj, source: str, destination: str = None, path: bool = False):
+    """Restore a backup to its target or a custom destination.
 
     Args:
         obj (dict): Click's context object.
         location (str): The location where backups are stored, can either be a
             preset name, or a directory path. If it is a preset, it loads all
             backups from the destinations in the preset.
-        path (bool): Whether or not we are loading backups from a directory
+        directory (bool): Whether or not we are loading backups from a directory
             path.
 
     Usage:
-        `yabu restore <preset>`
-        `yabu restore -d <path>`
-        `yabu restore <path> -d`
+        `yabu restore <source> [destination] [--path | -p]`
     """
     handler = CommandHandler(obj["config"])
-    try:
-        if directory:
-            location = Path(location)
-    except PresetNotFoundException:
-        print(f"The requested preset '{obj['location']}' is not found.")
+    if path:
+        source = Path(source)
 
-    backups = handler.list_backups(location)
+    try:
+        backups = handler.list_backups(source)
+    except FileNotFoundError:
+        print("Source path doesn't exist. :(")
+        return
+    except PresetNotFoundException:
+        print("The requested preset is not found. :(")
+        return
+
     selected_backup = None
     while selected_backup is None:
         try:
@@ -155,7 +159,12 @@ def restore(obj, location: str, directory: bool):
             continue
     try:
         print(f"restoring {selected_backup.path} to {selected_backup.target}")
-        handler.restore_backup(location=selected_backup.target, backup=selected_backup)
+        if destination is None:
+            print(f"restoring {selected_backup} to {selected_backup.target}.")
+            handler.restore_backup(location=selected_backup.target, backup=selected_backup)
+        else:
+            print(f"restoring {selected_backup} to {destination}")
+            handler.restore_backup(location=Path(destination), backup=selected_backup)
     except FileNotFoundError:
         print("The parent path of the target does not exist. Aborting restore.")
     except ContentTypeException:
