@@ -67,15 +67,15 @@ def backup(obj, preset: str, force: bool, keep: bool):
     """
     print("Creating backups...")
     handler = CommandHandler(obj["config"])
-    progress_bar = tqdm()
     items: list[Backup, Exception] = []
+    progress_bar = tqdm()
     for item in handler.create_backups(preset, force, keep):
         if isinstance(item, ProgressInfo):  # handle progress bar stuff
+            progress_bar.update(item.count)
             if item.total is not None:
                 progress_bar.reset(total=item.total)
             if item.msg is not None:
                 progress_bar.set_description(f"{item.msg}")
-            progress_bar.update(item.count)
         else:
             items.append(item)
     progress_bar.close()

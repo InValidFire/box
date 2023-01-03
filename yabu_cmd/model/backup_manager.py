@@ -385,13 +385,13 @@ class BackupManager:
             Backup: yields a backup of the target stored in the destination.
         """
         for target, destination in product(preset._targets, preset._destinations):
-            latest_backup = self.get_latest_backup(destination, target)
             md5_hash = None
             for i in self.create_md5_hash(target):
                 if isinstance(i, ProgressInfo):
                     yield i
                 elif isinstance(i, str):
                     md5_hash = i
+            latest_backup = self.get_latest_backup(destination, target)
             metafile_str = self._create_metafile(target, destination, md5_hash)
             if not force and latest_backup is not None:
                 if latest_backup.content_hash == md5_hash:
