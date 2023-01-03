@@ -160,10 +160,8 @@ def restore(obj, source: str, destination: str = None, path: bool = False):
     try:
         print(f"restoring {selected_backup.path} to {selected_backup.target}")
         if destination is None:
-            print(f"restoring {selected_backup} to {selected_backup.target}.")
             handler.restore_backup(location=selected_backup.target, backup=selected_backup)
         else:
-            print(f"restoring {selected_backup} to {destination}")
             handler.restore_backup(location=Path(destination), backup=selected_backup)
     except FileNotFoundError:
         print("The parent path of the target does not exist. Aborting restore.")
