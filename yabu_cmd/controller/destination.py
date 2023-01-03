@@ -50,6 +50,10 @@ class Destination:
         This should be a folder."""
         if not isinstance(new_path, Path):
             raise TypeError(new_path)
+        elif not new_path.exists():
+            raise FileNotFoundError(new_path)
+        elif not new_path.is_dir():
+            raise ValueError(new_path)
         else:
             self._path = new_path
 
