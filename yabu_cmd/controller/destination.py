@@ -14,11 +14,11 @@ class Destination:
         max_backup_count: int = 3,
         file_format: str = "zip",
     ):
-        self.path = path
-        self.date_format = date_format
-        self.name_separator = name_separator  # separates the original file name from the date in the archive name
-        self.max_backup_count = max_backup_count
-        self.file_format = file_format
+        self.path: Path = path
+        self.date_format: str = date_format
+        self.name_separator: str = name_separator  # separates the original file name from the date in the archive name
+        self.max_backup_count: int = max_backup_count
+        self.file_format: str = file_format
 
     def __eq__(self, other_destination) -> bool:
         if isinstance(other_destination, Destination):
