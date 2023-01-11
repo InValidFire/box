@@ -2,8 +2,8 @@ from yabu_cmd import PresetManager, BackupManager
 
 
 class TestBackup:
-    def test_backup_str(self, setup_create_backups):
-        preset_manager = PresetManager(setup_create_backups)
+    def test_backup_str(self, preset_json):
+        preset_manager = PresetManager(preset_json)
         presets = preset_manager.get_presets()
         backup_manager = BackupManager()
         backup_manager.create_backups(presets[0])

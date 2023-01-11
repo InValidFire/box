@@ -5,7 +5,7 @@ import pytest
 
 
 @pytest.fixture
-def setup_create_backups():
+def preset_json():
     import json
 
     temp_dir = Path("temp")
@@ -24,9 +24,9 @@ def setup_create_backups():
                 "targets": [str(folder.absolute())],
                 "destinations": [
                     {
-                        "path": str(temp_dir),
+                        "path": str(temp_dir.absolute()),
                         "file_format": "zip",
-                        "date_format": "%Y_%m_%d__%H%M%S%f",
+                        "date_format": "%Y_%m_%d__%H%M%S",
                         "max_backup_count": 3,
                         "name_separator": "-",
                     }
@@ -36,9 +36,9 @@ def setup_create_backups():
                 "targets": [str(file.absolute())],
                 "destinations": [
                     {
-                        "path": str(temp_dir),
+                        "path": str(temp_dir.absolute()),
                         "file_format": "zip",
-                        "date_format": "%Y_%m_%d__%H%M%S%f",
+                        "date_format": "%Y_%m_%d__%H%M%S",
                         "max_backup_count": 3,
                         "name_separator": "-",
                     }

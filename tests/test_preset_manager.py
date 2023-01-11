@@ -12,39 +12,9 @@ class TestPresetManager:
     @pytest.fixture
     def new_preset(self):
         preset = Preset("books")
-        preset.add_target(Path("cwc"))
-        preset.add_destination(Destination(Path("dwd")))
+        preset.add_target(Path("tempFolder"))
+        preset.add_destination(Destination(Path("temp")))
         return preset
-
-    @pytest.fixture
-    def preset_json(self):
-        import json
-
-        temp_dir = Path("temp")
-        temp_dir.mkdir()
-        preset_json_file = Path(temp_dir.joinpath("presets.json"))
-        preset_json_file.touch()
-        presets_data = {
-            "format": 1,
-            "presets": {
-                "minecraft": {
-                    "targets": ["awa"],
-                    "destinations": [
-                        {
-                            "path": "bwb",
-                            "file_format": "zip",
-                            "date_format": "%Y_%m_%d__%H%M%S",
-                            "max_backup_count": 3,
-                            "name_separator": "-",
-                        }
-                    ],
-                }
-            },
-        }
-        preset_json_file.write_text(json.dumps(presets_data, indent=4))
-        yield preset_json_file
-        preset_json_file.unlink()
-        temp_dir.rmdir()
 
     def test_get_presets(self, preset_json):
         preset_manager = PresetManager(preset_json)
@@ -55,64 +25,60 @@ class TestPresetManager:
 
     def test_pm_getitem(self, preset_json):
         preset_manager = PresetManager(preset_json)
-        test_preset = Preset("minecraft")
-        test_preset._targets.append(Path("awa"))
-        destination = Destination(Path("bwb"))
+        test_preset = Preset("testFolder")
+        test_preset._targets.append(Path("temp/folder").absolute())
+        destination = Destination(Path("temp").absolute())
         test_preset._destinations.append(destination)
-        assert preset_manager["minecraft"] == test_preset
+        assert preset_manager["testFolder"] == test_preset
 
     def test_get_preset(self, preset_json):
         preset_manager = PresetManager(preset_json)
-        test_preset = Preset("minecraft")
-        test_preset._targets.append(Path("awa"))
-        destination = Destination(Path("bwb"))
+        test_preset = Preset("testFolder")
+        test_preset._targets.append(Path("temp/folder").absolute())
+        destination = Destination(Path("temp").absolute())
         test_preset._destinations.append(destination)
-        preset = preset_manager.get_preset("minecraft")
-        assert preset._destinations == test_preset._destinations
-        assert preset._targets == test_preset._targets
-        assert preset.name == test_preset.name
-        assert preset_manager.get_preset("minecraft") == test_preset
+        assert preset_manager.get_preset("testFolder") == test_preset
 
     def test_get_nonexistant_preset(self, preset_json):
         preset_manager = PresetManager(preset_json)
         with pytest.raises(PresetNotFoundException):
             preset_manager.get_preset("books")
 
-    def test_save_preset_correct(self, preset_json, new_preset):
+    def test_save_preset_correct(self, preset_json):
         preset_manager = PresetManager(preset_json)
         preset = Preset("books")
-        preset.add_target(Path("cwc"))
-        preset.add_destination(Destination(Path("dwd")))
+        preset.add_target(Path("temp/folder"))
+        preset.add_destination(Destination(Path("temp")))
         preset_manager.save_preset(preset)
         # try to get saved preset back
-        assert preset_manager["books"] == new_preset
+        assert preset_manager["books"] == preset
 
     def test_save_preset_incorrect_destination(self, preset_json):
         preset_manager = PresetManager(preset_json)
         preset = Preset("books")
-        preset.add_target(Path("cwc"))
+        preset.add_target(Path("temp/folder"))
         with pytest.raises(TypeError):
-            preset.add_destination(Destination("dwd"))
+            preset.add_destination(Destination("temp"))
         preset_manager.save_preset(preset)
 
     def test_save_preset_incorrect(self, preset_json):
         preset_manager = PresetManager(preset_json)
         preset = Preset("books")
         with pytest.raises(TypeError):
-            preset.add_target("cwc")
-            preset.add_destination("dwd")
+            preset.add_target("temp/folder")
+            preset.add_destination("temp")
         preset_manager.save_preset(preset)
 
     def test_delete_preset(self, preset_json):
         preset_manager = PresetManager(preset_json)
-        preset = preset_manager.get_preset("minecraft")
+        preset = preset_manager.get_preset("testFile")
         preset_manager.delete_preset(preset)
-        assert len(preset_manager.get_presets()) == 0
+        assert len(preset_manager.get_presets()) == 1
 
     def test_delete_nonexistant_preset(self, preset_json):
         preset_manager = PresetManager(preset_json)
         preset = Preset("books")
-        preset._targets.append(Path("cwc"))
-        preset._destinations.append(Destination(Path("dwd")))
+        preset.add_target(Path("temp/folder"))
+        preset.add_destination(Destination(Path("temp")))
         with pytest.raises(PresetNotFoundException):
             preset_manager.delete_preset(preset)
