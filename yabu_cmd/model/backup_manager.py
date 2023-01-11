@@ -206,7 +206,9 @@ class BackupManager:
         try:
             with ZipFile(archive_path, mode="w", compression=ZIP_DEFLATED) as zip_file:
                 if target.is_dir():
-                    file_count = count_files(target) + 1  # adding one for the .yabu.meta
+                    file_count = (
+                        count_files(target) + 1
+                    )  # adding one for the .yabu.meta
                     yield ProgressInfo(0, msg=f"Zipping {target}", total=file_count)
                     for item in target.glob("**/*"):
                         yield ProgressInfo(
@@ -334,7 +336,9 @@ class BackupManager:
         backups.sort(key=self._get_backup_date)
         return backups
 
-    def create_md5_hash(self, target: Path) -> Generator[ProgressInfo | str, None, None]:
+    def create_md5_hash(
+        self, target: Path
+    ) -> Generator[ProgressInfo | str, None, None]:
         md5_hash = hashlib.md5()
         if target.is_dir():
             file_count = count_files(target, files_only=True)
@@ -415,7 +419,9 @@ class BackupManager:
                 + datetime.now().strftime(destination.date_format)
             )
             try:
-                if destination.file_format == "zip":  # allows us to support more formats later
+                if (
+                    destination.file_format == "zip"
+                ):  # allows us to support more formats later
                     for item in self._create_zip_archive(
                         archive_name, target, destination, metafile_str
                     ):
@@ -427,7 +433,9 @@ class BackupManager:
                             archive_path = item
                 else:
                     yield FormatException(
-                        msg=destination.file_format, target=target, destination=destination
+                        msg=destination.file_format,
+                        target=target,
+                        destination=destination,
                     )
                     continue
                 if not keep:
@@ -435,7 +443,9 @@ class BackupManager:
                 yield self.get_backup_from_file(archive_path)
             except KeyboardInterrupt:
                 archive_path.unlink()
-                yield BackupAbortedException("The backup was aborted", target, destination)
+                yield BackupAbortedException(
+                    "The backup was aborted", target, destination
+                )
             except Exception:  # keep from storing backups that failed for other means.
                 archive_path.unlink()
                 raise

@@ -107,7 +107,9 @@ def backup(obj, preset: str, force: bool, keep: bool):
                 f"Backup Failed:\n\tBackup format unsupported\n\tTarget: {e.target}\n\tDestination: {e.destination}"
             )
         except BackupAbortedException as e:
-            print(f"Backup Aborted:\n\tTarget: {e.target}\n\tDestination: {e.destination}")
+            print(
+                f"Backup Aborted:\n\tTarget: {e.target}\n\tDestination: {e.destination}"
+            )
 
 
 @cli.command()
@@ -160,7 +162,9 @@ def restore(obj, source: str, destination: str = None, path: bool = False):
     try:
         print(f"restoring {selected_backup.path} to {selected_backup.target}")
         if destination is None:
-            handler.restore_backup(location=selected_backup.target, backup=selected_backup)
+            handler.restore_backup(
+                location=selected_backup.target, backup=selected_backup
+            )
         else:
             handler.restore_backup(location=Path(destination), backup=selected_backup)
     except FileNotFoundError:
