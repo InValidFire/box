@@ -1,3 +1,5 @@
+import os
+
 from pathlib import Path
 
 from yabu_cmd.controller import CommandHandler, ProgressInfo, Backup
@@ -35,7 +37,9 @@ def presets(obj):
     """
     handler = CommandHandler(obj["config"])
     try:
+        print(f"Loading presets from {obj['config']}\n\nPresets:")
         for preset in handler.list_presets():
+            print("-" * os.get_terminal_size().columns)
             print(preset)
     except FileNotFoundError:
         print(f"Uh-Oh! Your config file appears to be missing: '{obj['config']}'")
