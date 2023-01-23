@@ -21,9 +21,5 @@ class Backup:
         output += f"\n\tname: {self.name}"
         output += f"\n\ttarget: {self.target}"
         output += f"\n\tpath: {self.path}"
-        # output += f"\n\tdate_format: {self.date_format}"
-        # output += f"\n\tname_separator: {self.name_separator}"
         output += f"\n\tdate: {self.date}"
-        # output += f"\n\tcontent_hash: {self.content_hash}"
-        # output += f"\n\tcontent_type: {self.content_type}"
         return output
