@@ -25,7 +25,7 @@ def cli(ctx: click.Context, config):
     pass
 
 
-@cli.command()
+@cli.command(help="List all presets found in the preset config.")
 @click.pass_obj
 def presets(obj):
     """List all presets found in the preset config.
@@ -45,9 +45,9 @@ def presets(obj):
         )
 
 
-@cli.command()
-@click.option("--force", "-f", default=False)
-@click.option("--keep", "-k", default=False)
+@cli.command(help="Create a backup of a preset.")
+@click.option("--force", "-f", default=False, help="Force the creation of a backup, even if a duplicate already exists.")
+@click.option("--keep", "-k", default=False, help="Keep the backup even if it surpasses the preset's max_backup_count.")
 @click.argument("preset")
 @click.pass_obj
 def backup(obj, preset: str, force: bool, keep: bool):
@@ -112,10 +112,10 @@ def backup(obj, preset: str, force: bool, keep: bool):
             )
 
 
-@cli.command()
+@cli.command(help="Restore a backup to its target or a custom destination")
 @click.option("--path", "-p", type=bool, is_flag=True, default=False)
-@click.argument("source", required=True)
-@click.argument("destination", required=False)
+@click.argument("source", required=True, help="The backup source, either a preset name, or a folder where backups are stored.")
+@click.argument("destination", required=False, help="The destination to restore to. Not required, backups will try to restore to their original location by default.")
 @click.pass_obj
 def restore(obj, source: str, destination: str = None, path: bool = False):
     """Restore a backup to its target or a custom destination.
