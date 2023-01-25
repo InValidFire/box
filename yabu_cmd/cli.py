@@ -118,8 +118,8 @@ def backup(obj, preset: str, force: bool, keep: bool):
 
 @cli.command(help="Restore a backup to its target or a custom destination")
 @click.option("--path", "-p", type=bool, is_flag=True, default=False)
-@click.argument("source", required=True, help="The backup source, either a preset name, or a folder where backups are stored.")
-@click.argument("destination", required=False, help="The destination to restore to. Not required, backups will try to restore to their original location by default.")
+@click.option("--source", required=True, help="The backup source, either a preset name, or a folder where backups are stored.")
+@click.option("--destination", required=False, help="The destination to restore to. Not required, backups will try to restore to their original location by default.")
 @click.pass_obj
 def restore(obj, source: str, destination: str = None, path: bool = False):
     """Restore a backup to its target or a custom destination.
