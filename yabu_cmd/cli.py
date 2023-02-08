@@ -155,7 +155,9 @@ def restore(obj, source: str, destination: str = None):
             print("\nBackups:")
             for i, backup in enumerate(backups, start=1):
                 print(f"{i}. {backup.name} - {backup.date}")
-            selected_backup = int(input("\nSelect a backup to restore (CTRL-C to cancel): "))
+            selected_backup = int(
+                input("\nSelect a backup to restore (CTRL-C to cancel): ")
+            )
             selected_backup = backups[selected_backup - 1]
         except ValueError:
             print("The value entered is not a number...")
@@ -176,9 +178,7 @@ def restore(obj, source: str, destination: str = None):
             selected_backup = None
     try:
         print(f"restoring {selected_backup.path} to {restore_location}")
-        handler.restore_backup(
-            location=restore_location, backup=selected_backup
-        )
+        handler.restore_backup(location=restore_location, backup=selected_backup)
     except FileNotFoundError:
         print("The parent path of the target does not exist. Aborting restore.")
     except ContentTypeException:
