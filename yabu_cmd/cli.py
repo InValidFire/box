@@ -39,7 +39,10 @@ def presets(obj):
     try:
         print(f"Loading presets from {obj['config']}\n\nPresets:")
         for preset in handler.list_presets():
-            print("-" * os.get_terminal_size().columns)
+            try:
+                print("-" * os.get_terminal_size().columns)
+            except OSError:
+                print("-" * 10)
             print(preset)
     except FileNotFoundError:
         print(f"Uh-Oh! Your config file appears to be missing: '{obj['config']}'")
