@@ -119,27 +119,25 @@ def backup(obj, preset: str, force: bool, keep: bool):
             )
 
 
-@cli.command(help="Restore a backup to its target or a custom destination")
-@click.option("--path", "-p", type=bool, is_flag=True, default=False)
+@cli.command(help="Restore a backup to its target or a custom destination.")
 @click.option("--source", required=True, help="The backup source, either a preset name, or a folder where backups are stored.")
 @click.option("--destination", required=False, help="The destination to restore to. Not required, backups will try to restore to their original location by default.")
 @click.pass_obj
-def restore(obj, source: str, destination: str = None, path: bool = False):
+def restore(obj, source: str, destination: str = None):
     """Restore a backup to its target or a custom destination.
 
     Args:
         obj (dict): Click's context object.
-        location (str): The location where backups are stored, can either be a
+        source (str): The location where backups are stored, can either be a
             preset name, or a directory path. If it is a preset, it loads all
-            backups from the destinations in the preset.
-        directory (bool): Whether or not we are loading backups from a directory
-            path.
+            backups from the destinations in the preset, and gives you the opportunity to select one.
+        destination (bool) [Optional]: The destination path to restore to.
 
     Usage:
-        `yabu restore <source> [destination] [--path | -p]`
+        `yabu restore <source> [destination]`
     """
     handler = CommandHandler(obj["config"])
-    if path:
+    if source not in handler.list_presets() and Path(source).exists():
         source = Path(source)
 
     try:
@@ -157,7 +155,7 @@ def restore(obj, source: str, destination: str = None, path: bool = False):
             print("\nBackups:")
             for i, backup in enumerate(backups, start=1):
                 print(f"{i}. {backup.name} - {backup.date}")
-            selected_backup = int(input("\nSelect a backup to restore: "))
+            selected_backup = int(input("\nSelect a backup to restore (CTRL-C to cancel): "))
             selected_backup = backups[selected_backup - 1]
         except ValueError:
             print("The value entered is not a number...")
@@ -166,14 +164,21 @@ def restore(obj, source: str, destination: str = None, path: bool = False):
             print("There is no backup matching the entered value...")
             selected_backup = None
             continue
-    try:
-        print(f"restoring {selected_backup.path} to {selected_backup.target}")
         if destination is None:
-            handler.restore_backup(
-                location=selected_backup.target, backup=selected_backup
-            )
+            restore_location = selected_backup.target
         else:
-            handler.restore_backup(location=Path(destination), backup=selected_backup)
+            restore_location = destination
+        print(f"The following backup will be restored:\n{selected_backup}\n")
+        if destination is None:
+            print(f"Restore destination: {restore_location}")
+        confirm = input("Continue? (y/n): ")
+        if confirm.lower() != "y":
+            selected_backup = None
+    try:
+        print(f"restoring {selected_backup.path} to {restore_location}")
+        handler.restore_backup(
+            location=restore_location, backup=selected_backup
+        )
     except FileNotFoundError:
         print("The parent path of the target does not exist. Aborting restore.")
     except ContentTypeException:

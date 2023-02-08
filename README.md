@@ -55,9 +55,9 @@ YABU loads a file in your HOME directory called `.yabu_config.json`, it should h
 ## Usage
 `yabu list` - list all presets found in the config file.
 
-`yabu backup [-f|-k] <preset>` - create a backup using the `preset`. if the `f` flag is set, force the backup creation even if it was already saved. if the `k` flag is set, keep backups beyond the max_backup_count.
+`yabu backup [--force] [--keep] <preset>` - create a backup using the `preset`. if the `force` flag is set, force the backup creation even if it was already saved. if the `keep` flag is set, keep backups beyond the max_backup_count.
 
-`yabu restore [-d <dir>] <preset>` - restore a backup from the `preset`
+`yabu restore --source=<preset|backups_folder> [--destination <destination_path>]` - select a backup to restore from the `preset` or `backups_folder` path. The `backups_folder` path should contain completed backups from the utility. If the `destination` is given, the original backup's target will not be used and the backup will instead be restored to the custom destination.
 
 `yabu modify <preset>` - modify the `preset`. if the preset does not exist, create a blank one.
 
