@@ -56,9 +56,9 @@ YABU loads a file in your HOME directory called `.yabu_config.json`, it should h
 1. user can pick a backup to restore.
 2. user can choose to delete a backup upon restoration.
 
-## Testing
+## Development
 
-To run the program in a testing environment, first install the program using pip.
+To run the program in a development environment, first install the program using pip.
 
 `pip install -e <repo-directory>`
 
