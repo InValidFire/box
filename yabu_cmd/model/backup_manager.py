@@ -153,7 +153,7 @@ class BackupManager:
         target: Path,
         destination: Destination,
         content_hash: str,
-    ) -> Path:
+    ) -> str:
         """Create the metafile of a backup. Stores the backup's target source,
         the name_separator, the date_format, and the content_hash. All of this
         allows the backup to identify itself and present itself correctly to
@@ -165,11 +165,11 @@ class BackupManager:
         Args:
             target (Path): The target the backup was created from.
             destination (Destination): The destination path.
-                The metafile is created here.
+                Used to fetch metadata.
             content_hash (str): The hash of the backup's contents.
 
         Returns:
-            Path: The path of the metafile.
+            str: The contents of the metafile.
         """
         metadata = {
             "target": str(target),

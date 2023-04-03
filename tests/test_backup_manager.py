@@ -1,6 +1,7 @@
 from pathlib import Path
 
 import shutil
+import json
 import pytest
 
 from yabu_cmd.controller import Backup, ProgressInfo
@@ -121,3 +122,26 @@ class TestBackupManager:
             testFolder_count += 1
         assert testFile_count == 4
         assert testFolder_count == 4
+
+    def test_metafile_generation(self, preset_json):
+        preset_manager = PresetManager(preset_json)
+        preset = preset_manager["testFolder"]
+        target = preset._targets[0]
+        destination = preset._destinations[0]
+        backup_manager = BackupManager()
+        md5_hash = None
+        for i in backup_manager.create_md5_hash(target):
+            if isinstance(i, ProgressInfo):
+                continue
+            if isinstance(i, str):
+                md5_hash = i
+        metafile_str = backup_manager._create_metafile(target, destination, md5_hash)
+
+        metafile_json = json.loads(metafile_str)
+
+        assert len(metafile_json.keys()) == 5
+        assert metafile_json['target'] == str(target)
+        assert metafile_json['name_separator'] == destination.name_separator
+        assert metafile_json['date_format'] == destination.date_format
+        assert metafile_json['content_hash'] == md5_hash
+        assert metafile_json['content_type'] == "folder"
