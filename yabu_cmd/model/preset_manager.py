@@ -6,7 +6,6 @@ from jsonschema import validate, ValidationError
 from ..controller.preset import Preset
 from ..controller.preset import Destination
 from ..exceptions.exceptions import InvalidPresetConfig, PresetNotFoundException
-from .destination_manager import DestinationManager
 from ..controller.destination import VALID_FILE_FORMATS
 
 __all__ = ["PresetManager"]
@@ -169,9 +168,8 @@ class PresetManager:
             preset = Preset(preset_name)
             for target in preset_dict["targets"]:
                 preset.add_target(Path(target))
-            destination_manager = DestinationManager()
             for destination in preset_dict["destinations"]:
-                destination = destination_manager.get_destination(destination)
+                destination = Destination.from_dict(destination)
                 preset.add_destination(destination)
             presets[preset.name] = preset
         return presets
