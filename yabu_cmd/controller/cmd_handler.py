@@ -114,7 +114,7 @@ class CommandHandler:
             backup_path (Path): The file path of the backup to delete.
         """
         backup_manager = BackupManager()
-        backup = backup_manager.get_backup_from_file(backup_path)
+        backup = Backup.from_file(backup_path)
         backup_manager.delete_backup(backup)
 
     def restore_backup(self, location: str | Path, backup: Backup):

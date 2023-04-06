@@ -1,6 +1,6 @@
 from pathlib import Path
 from ..controller.backup import Backup
-
+from ..exceptions import NotABackupException, FormatException
 VALID_FILE_FORMATS = ["zip"]
 
 __all__ = ["Destination"]
@@ -174,6 +174,32 @@ class Destination:
             destination.file_format = destination_dict["file_format"]
         return destination
 
-    def get_backups(self) -> list[Backup]:
-        # to be implemented once Backups can load themselves from file.
-        pass
+    def get_backups(self, target: Path = None) -> list[Backup]:
+        """Get all backups found in the destination, optionally filtered by a source target.
+
+        Args:
+            target (Path, optional): The target path to filter with.
+
+        Raises:
+            FormatException: If the format loaded in the
+                destination is unknown.
+
+        Returns:
+            list[Backup]: A list of all backups found in the destination,
+                sorted by date in ascending order.
+        """
+        backups: list[Backup] = []
+        if self.file_format == "zip":
+            for path in self.path.glob("*.zip"):
+                try:
+                    backup = Backup.from_file(path)
+                    if target is not None and backup.target == target:
+                        backups.append(backup)
+                    elif target is None:
+                        backups.append(backup)
+                except NotABackupException:
+                    continue
+        else:
+            raise FormatException(self.file_format)
+        backups.sort(key=lambda x: x.date)
+        return backups

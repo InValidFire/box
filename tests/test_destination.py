@@ -1,6 +1,7 @@
 import json
+from pathlib import Path
 
-from yabu_cmd import Destination
+from yabu_cmd import Destination, BackupManager, PresetManager
 
 
 class TestDestination:
@@ -18,3 +19,24 @@ class TestDestination:
             assert destination.max_backup_count == destination_json['max_backup_count']
             assert destination.date_format == destination_json['date_format']
             assert str(destination.path) == destination_json['path']
+
+    def test_get_backups(self, preset_json):
+        preset_manager = PresetManager(preset_json)
+        backup_manager = BackupManager()
+
+        for preset in preset_manager.get_presets():
+            for _ in backup_manager.create_backups(preset):
+                pass
+
+            for destination in preset._destinations:
+                backups = destination.get_backups()
+
+                file_count = 0
+                for _ in Path(destination.path).glob(f"*.{destination.file_format}"):
+                    file_count += 1
+
+                assert len(backups) == file_count  # ensures it finds all created backups in the Destination
+
+                for target in preset._targets:
+                    for backup in destination.get_backups(target):
+                        assert backup.target == target

@@ -14,7 +14,6 @@ from ..controller.progress_info import ProgressInfo
 from ..exceptions import (
     YabuException,
     FormatException,
-    NotABackupException,
     BackupHashException,
     TargetNotFoundException,
     DestinationNotFoundException,
@@ -104,50 +103,6 @@ class BackupManager:
             cls.instance = super().__new__(cls)
         return cls.instance
 
-    def get_backup_from_file(self, file_path: Path) -> Backup:
-        """Get a `Backup` object from the requested file path.
-
-        Args:
-            file_path (Path): The file path to load a Backup object from.
-
-        Raises:
-            NotABackupException: If the metafile cannot be found.
-            FormatException: If the file format is unsupported.
-
-        Returns:
-            Backup: The backup object.
-        """
-        if file_path.suffix == ".zip":
-            with ZipFile(file_path, "r") as zip_file:
-                if ".yabu.meta" not in zip_file.namelist():
-                    raise NotABackupException(zip_file.filename)
-                else:
-                    metafile = zip_file.read(".yabu.meta").decode("utf-8")
-                    metadata = json.loads(metafile)
-
-                    name_separator = metadata["name_separator"]
-                    date_format = metadata["date_format"]
-                    target = Path(metadata["target"])
-                    content_hash = metadata["content_hash"]
-                    content_type = metadata["content_type"]
-                    name_str = file_path.stem.split(name_separator)[0]
-                    date_str = file_path.stem.split(name_separator)[1]
-                    date = datetime.strptime(date_str, date_format)
-
-                    backup_path = file_path.absolute()
-            return Backup(
-                name_str,
-                backup_path,
-                date_format,
-                name_separator,
-                target,
-                date,
-                content_hash,
-                content_type,
-            )
-        else:
-            raise FormatException(file_path.suffix)
-
     def _create_metafile(
         self,
         target: Path,
@@ -227,17 +182,6 @@ class BackupManager:
         finally:
             yield archive_path
 
-    def _get_backup_date(self, backup: Backup) -> datetime:
-        """Internal method to get the backup date from a backup. Used in the
-        sorting process of backup lists.
-
-        Args:
-            backup (Backup): The backup.
-        Returns:
-            datetime: The date of the backup.
-        """
-        return backup.date
-
     def _get_delete_candidates(
         self,
         target: Path,
@@ -261,7 +205,7 @@ class BackupManager:
             list[Backup]: The list of candidates for deletion.
         """
         target_backups: list[Backup] = []
-        for backup in self.get_backups(destination):
+        for backup in destination.get_backups(target):
             if backup.target == target:
                 target_backups.append(backup)
         if len(target_backups) > destination.max_backup_count:
@@ -284,57 +228,6 @@ class BackupManager:
         """
         for backup in self._get_delete_candidates(target, destination):
             self.delete_backup(backup)
-
-    def _get_backups(
-        self,
-        target: Path,
-        destination: Destination,
-    ) -> list[Backup]:
-        """Get all backups of a specific target found in a destination.
-
-        Args:
-            target (Path): The target path.
-            destination (Destination): The destination to search.
-
-        Returns:
-            list[Backup]: A list containing Backups of the target.
-        """
-        backups = []
-        for backup in self._get_destination_backups(destination):
-            if backup.target == target:
-                backups.append(backup)
-        return backups
-
-    def _get_destination_backups(
-        self,
-        destination: Destination,
-    ) -> list[Backup]:
-        """Internal method to get all backups found in a destination,
-        regardless of their original source target.
-
-        Args:
-            destination (Destination): The destination to get backups from.
-
-        Raises:
-            UnsupportedFormatException: If the format loaded in the
-                destination is unknown.
-
-        Returns:
-            list[Backup]: A list of all backups found in the destination,
-                sorted by date in ascending order.
-        """
-        backups: list[Backup] = []
-        if destination.file_format == "zip":
-            for path in destination.path.glob("*.zip"):
-                try:
-                    backup = self.get_backup_from_file(path)
-                    backups.append(backup)
-                except NotABackupException:
-                    continue
-        else:
-            raise FormatException(destination.file_format)
-        backups.sort(key=self._get_backup_date)
-        return backups
 
     def create_md5_hash(
         self, target: Path
@@ -440,7 +333,7 @@ class BackupManager:
                     continue
                 if not keep:
                     self._delete_old_backups(target, destination)
-                yield self.get_backup_from_file(archive_path)
+                yield Backup.from_file(archive_path)
             except KeyboardInterrupt:
                 archive_path.unlink()
                 yield BackupAbortedException(
@@ -551,21 +444,19 @@ class BackupManager:
             list[Backup]: The list of backups.
         """
         if isinstance(source, Destination) and target is None:
-            return self._get_destination_backups(source)
+            return source.get_backups()
         elif isinstance(source, Destination) and target is not None:
-            return self._get_backups(target, source)
+            return source.get_backups(target)
         elif isinstance(source, Preset) and target is None:
             backups: list[Backup] = []
-            for preset_target, preset_destination in product(
-                source._targets, source._destinations
-            ):
-                backups += self._get_backups(preset_target, preset_destination)
-            backups.sort(key=self._get_backup_date)
+            for preset_destination in source._destinations:
+                backups += preset_destination.get_backups()
+            backups.sort(key=lambda x: x.date)
             return backups
         elif isinstance(source, Preset) and target is not None:
             for preset_destination in source._destinations:
-                backups += self._get_backups(target, preset_destination)
-            backups.sort(key=self._get_backup_date)
+                backups += preset_destination.get_backups(target)
+            backups.sort(key=lambda x: x.date)
         else:
             raise TypeError(source)
 
