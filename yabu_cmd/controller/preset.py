@@ -36,6 +36,9 @@ class Preset:
                 return False
             return True
         return False
+    
+    def __repr__(self):
+        return f"Preset(name={self.name}, _targets={self._targets}, _destinations={self._destinations})"
 
     @property
     def name(self) -> str:
