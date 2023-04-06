@@ -113,9 +113,8 @@ class CommandHandler:
         Args:
             backup_path (Path): The file path of the backup to delete.
         """
-        backup_manager = BackupManager()
         backup = Backup.from_file(backup_path)
-        backup_manager.delete_backup(backup)
+        backup.delete()
 
     def restore_backup(self, location: str | Path, backup: Backup):
         """Restore the given backup to its target path.
@@ -137,15 +136,14 @@ class CommandHandler:
                 preset's targets.
             TypeError: If the given location is neither a path or a string.
         """
-        backup_manager = BackupManager()
         if isinstance(location, str):  # get the preset from the preset name
             preset_manager = PresetManager(self.config_path)
             preset = preset_manager.get_preset(location)
             if backup.target in preset._targets:
-                backup_manager.restore_backup(backup.target, backup)
+                backup.restore()
             else:
                 raise TargetMatchException(preset, backup.target)
         elif isinstance(location, Path):
-            backup_manager.restore_backup(location, backup)
+            backup.restore(location)
         else:
             raise TypeError(location)

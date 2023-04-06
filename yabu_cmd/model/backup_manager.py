@@ -17,7 +17,6 @@ from ..exceptions import (
     BackupHashException,
     TargetNotFoundException,
     DestinationNotFoundException,
-    ContentTypeException,
     BackupAbortedException,
 )
 
@@ -34,47 +33,6 @@ def count_files(path: Path, files_only=False):
         elif not files_only:
             count += 1
     return count
-
-
-def extract_zip_archive(archive_path: Path, destination_path: Path):
-    """Extract a zip archive at the given path to the destination path.
-
-    Args:
-        archive_path (Path): The path to the zip archive.
-        destination_path (Path): The destination to extract the archive in.
-    """
-    zf = ZipFile(archive_path)
-    zf.extractall(destination_path)
-
-
-def restore_zip_archive(backup: Backup, target: Path):
-    """Restore a zip backup to a target path.
-
-    Args:
-        backup (Backup): The backup to restore.
-        target (Path): The target to restore to.
-    """
-    extract_zip_archive(backup.path, target)
-    target.joinpath(".yabu.meta").unlink()
-
-
-def rmdir(path: Path):
-    """Recursively remove a directory and its contents.
-
-    Args:
-        path (Path): The path to target.
-
-    Raises:
-        ValueError: If the path is not a directory.
-    """
-    if not path.is_dir():
-        raise ValueError(path)
-    for file in path.iterdir():
-        if file.is_file():
-            file.unlink()
-        if file.is_dir():
-            rmdir(file)
-    path.rmdir()
 
 
 def get_content_type(target: Path) -> str:
@@ -227,7 +185,7 @@ class BackupManager:
                 in.
         """
         for backup in self._get_delete_candidates(target, destination):
-            self.delete_backup(backup)
+            backup.delete()
 
     def create_md5_hash(
         self, target: Path
@@ -342,58 +300,6 @@ class BackupManager:
             except Exception:  # keep from storing backups that failed for other means.
                 archive_path.unlink()
                 raise
-
-    def restore_backup(self, target: Path, backup: Backup) -> None:
-        """Restore a backup to the given target.
-
-        Args:
-            target (Path): The target path to restore the backup to.
-            backup (Backup): The backup to restore.
-
-        Raises:
-            FileNotFoundError: If the target path's parent does not exist.
-                This prevents accidentally making new directory trees.
-            ContentTypeException: If you are trying to restore a folder
-                backup to a file target, or vice-versa.
-            Also raised if the content type is not expected.
-            FormatException: If the backup's format is not supported.
-        """
-        if not target.parent.exists():
-            raise FileNotFoundError(target.parent)
-        if (target.is_dir() and backup.content_type == "file") or (
-            target.is_file() and backup.content_type == "folder"
-        ):
-            raise ContentTypeException(
-                f"The backup content type '{backup.content_type}' does not match the target Type."
-            )
-        if backup.content_type == "folder":
-            if target.exists():
-                rmdir(target)
-            target.mkdir()
-            if (
-                backup.path.suffix == ".zip"
-            ):  # allows us to support multiple formats later. :)
-                restore_zip_archive(backup, target)
-            else:
-                raise FormatException(backup.path.suffix)
-        elif backup.content_type == "file":
-            if backup.path.suffix == ".zip":
-                target.unlink(missing_ok=True)
-                restore_zip_archive(backup, target.parent)
-            else:
-                raise FormatException(backup.path.suffix)
-        else:
-            raise ContentTypeException(
-                f"The backup content type '{backup.content_type}' is not expected."
-            )
-
-    def delete_backup(self, backup: Backup) -> None:
-        """Delete the given backup.
-
-        Args:
-            backup (Backup): The backup to delete.
-        """
-        backup.path.unlink()
 
     def delete_old_backups(self, preset: Preset) -> None:
         """Delete the oldest backups in each destination until the number of

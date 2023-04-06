@@ -145,3 +145,21 @@ class TestBackupManager:
         assert metafile_json['date_format'] == destination.date_format
         assert metafile_json['content_hash'] == md5_hash
         assert metafile_json['content_type'] == "folder"
+
+    def test_restore_backup(self, preset_json):
+        preset_manager = PresetManager(preset_json)
+        backup_manager = BackupManager()
+
+        for preset in preset_manager.get_presets():
+            for backup in backup_manager.create_backups(preset):
+                if isinstance(backup, Backup):
+                    if backup.target.is_dir():
+                        shutil.rmtree(backup.target)
+                    elif backup.target.is_file():
+                        backup.target.unlink()
+
+                    assert not backup.target.exists()
+
+                    backup.restore()
+
+                    assert backup.target.exists()
