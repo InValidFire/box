@@ -203,3 +203,21 @@ class Destination:
             raise FormatException(self.file_format)
         backups.sort(key=lambda x: x.date)
         return backups
+
+    def get_latest_backup(
+        self, target: Path = None
+    ) -> Backup:
+        """Get the latest backup from the destination. If target is specified,
+        only get the latest backup of the target.
+
+        Args:
+            target (Path, optional): Target path to limit the backup search.
+                Defaults to None.
+
+        Returns:
+            Backup: The latest backup
+        """
+        backups = self.get_backups(target=target)
+        if len(backups) == 0:
+            return
+        return backups[-1]

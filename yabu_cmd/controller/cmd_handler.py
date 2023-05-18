@@ -2,12 +2,10 @@ from pathlib import Path
 
 from typing import Generator
 
-from ..model.preset_manager import PresetManager
 from .preset import Preset
 from .backup import Backup
 from .progress_info import ProgressInfo
 from .destination import Destination
-from ..model.backup_manager import BackupManager
 
 from ..exceptions import YabuException, TargetMatchException
 
@@ -16,7 +14,9 @@ __all__ = ["CommandHandler"]
 
 class CommandHandler:
     def __init__(self, config_path: Path | str) -> None:
-        self.config_path = config_path
+        if isinstance(config_path, str):
+            config_path = Path(config_path)
+        Preset.load_file(config_path)
 
     def list_presets(self) -> list[Preset]:
         """Return a list of presets loaded from the PresetManager's config file.
@@ -24,8 +24,8 @@ class CommandHandler:
         Returns:
             list[Preset]: The list of presets.
         """
-        preset_manager = PresetManager(self.config_path)
-        return preset_manager.get_presets()
+        presets = Preset.get_presets()
+        return presets
 
     def get_preset(self, preset_name: str) -> Preset:
         """Return a preset from the PresetManager.
@@ -36,8 +36,7 @@ class CommandHandler:
         Returns:
             Preset: The preset object.
         """
-        preset_manager = PresetManager(self.config_path)
-        return preset_manager.get_preset(preset_name)
+        return Preset.get_preset(preset_name)
 
     def get_preset_targets(self, preset_name: str) -> list[Path]:
         """Return the list of targets from the preset of the given name.
@@ -48,8 +47,8 @@ class CommandHandler:
         Returns:
             list[Path]: The list of target paths.
         """
-        preset_manager = PresetManager(self.config_path)
-        return preset_manager[preset_name]._targets.copy()
+        preset = Preset.get_preset(preset_name)
+        return preset._targets.copy()
 
     def list_backups(self, location: str | Path, file_format="zip") -> list[Backup]:
         """List the backups found in the given location.
@@ -63,15 +62,14 @@ class CommandHandler:
         Returns:
             list[Backup]: The list of backups found in the location.
         """
-        backup_manager = BackupManager()
         if isinstance(location, str):
-            preset_manager = PresetManager(self.config_path)
-            location = preset_manager.get_preset(location)
+            preset = Preset.get_preset(location)
+            return preset.get_backups()
         if isinstance(location, Path):
-            location = Destination(
+            destination = Destination(
                 location, file_format=file_format
             )  # convert location path to a destination object.
-        return backup_manager.get_backups(location)
+            return destination.get_backups(location)
 
     def create_backups(
         self, preset_name: str, force: bool, keep: bool
@@ -101,10 +99,8 @@ class CommandHandler:
             YabuException: any exceptions raised from failed backups.
             ProgressInfo: updates to the backup progress from the model.
         """
-        backup_manager = BackupManager()
-        preset_manager = PresetManager(self.config_path)
-        preset = preset_manager[preset_name]
-        for item in backup_manager.create_backups(preset, force=force, keep=keep):
+        preset: Preset = Preset.get_preset(preset_name)
+        for item in preset.create_backups(force=force, keep=keep):
             yield item
 
     def delete_backup(self, backup_path: Path) -> None:
@@ -137,8 +133,7 @@ class CommandHandler:
             TypeError: If the given location is neither a path or a string.
         """
         if isinstance(location, str):  # get the preset from the preset name
-            preset_manager = PresetManager(self.config_path)
-            preset = preset_manager.get_preset(location)
+            preset = Preset.get_preset(location)
             if backup.target in preset._targets:
                 backup.restore()
             else:

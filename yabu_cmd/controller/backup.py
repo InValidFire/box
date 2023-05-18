@@ -28,8 +28,7 @@ def rmdir(path: Path):
             rmdir(file)
     path.rmdir()
 
-
-@dataclass(frozen=True, repr=True)
+@dataclass
 class Backup:
     name: str = None
     path: Path = None
@@ -99,6 +98,26 @@ class Backup:
             return cls._load_zip(file_path)
         else:
             raise FormatException(file_path.suffix)
+
+    @staticmethod
+    def get_content_type(target: Path) -> str:
+        """Get the content type of a target path in string format.
+
+        Args:
+            target (Path): The target path.
+
+        Raises:
+            ValueError: If the target path is neither a file or folder.
+
+        Returns:
+            str: The content type.
+        """
+        if target.is_dir():
+            return "folder"
+        elif target.is_file():
+            return "file"
+        else:
+            raise ValueError(target)
 
     def delete(self):
         self.path.unlink()
