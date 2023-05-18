@@ -1,15 +1,83 @@
 from pathlib import Path
-
 import shutil
 import json
+
 import pytest
 
-from yabu_cmd.controller import Backup, ProgressInfo
-from yabu_cmd.model import PresetManager
-from yabu_cmd.model import BackupManager
+from yabu_cmd.controller.preset import Preset
+from yabu_cmd.controller.destination import Destination
+from yabu_cmd.controller.backup import Backup
+from yabu_cmd.exceptions.exceptions import PresetNotFoundException
+from yabu_cmd.controller.progress_info import ProgressInfo
 
 
-class TestBackupManager:
+class TestPreset:
+    @pytest.fixture
+    def new_preset(self):
+        preset = Preset("books")
+        preset.add_target(Path("tempFolder"))
+        preset.add_destination(Destination(Path("temp")))
+        return preset
+
+    def test_get_presets(self, preset_json):
+        Preset.load_file(preset_json)
+        presets = Preset.get_presets()
+        assert len(presets) > 0
+        for item in presets:
+            assert isinstance(item, Preset), "an item is not a Preset"
+
+    def test_get_preset(self, preset_json):
+        Preset.load_file(preset_json)
+        test_preset = Preset("testFolder")
+        test_preset._targets.append(Path("temp/folder").absolute())
+        destination = Destination(Path("temp").absolute())
+        test_preset._destinations.append(destination)
+        assert Preset.get_preset("testFolder") == test_preset
+
+    def test_get_nonexistant_preset(self, preset_json):
+        Preset.load_file(preset_json)
+        with pytest.raises(PresetNotFoundException):
+            Preset.get_preset("books")
+
+    def test_save_preset_correct(self, preset_json):
+        Preset.load_file(preset_json)
+        preset = Preset("books")
+        preset.add_target(Path("temp/folder"))
+        preset.add_destination(Destination(Path("temp")))
+        preset.save()
+        # try to get saved preset back
+        assert Preset.get_preset("books") == preset
+
+    def test_save_preset_incorrect_destination(self, preset_json):
+        Preset.load_file(preset_json)
+        preset = Preset("books")
+        preset.add_target(Path("temp/folder"))
+        with pytest.raises(TypeError):
+            preset.add_destination(Destination("temp"))
+        preset.save()
+
+    def test_save_preset_incorrect(self, preset_json):
+        Preset.load_file(preset_json)
+        preset = Preset("books")
+        with pytest.raises(TypeError):
+            preset.add_target("temp/folder")
+            preset.add_destination("temp")
+        preset.save()
+
+    def test_delete_preset(self, preset_json):
+        Preset.load_file(preset_json)
+        preset = Preset.get_preset("testFile")
+        preset.delete()
+        assert len(Preset.get_presets()) == 1
+
+    def test_delete_nonexistant_preset(self, preset_json):
+        Preset.load_file(preset_json)
+        preset = Preset("books")
+        preset.add_target(Path("temp/folder"))
+        preset.add_destination(Destination(Path("temp")))
+        with pytest.raises(PresetNotFoundException):
+            preset.delete()
+
     @pytest.fixture
     def setup_create_backups_force_no_keep(self):
         import json
@@ -56,12 +124,11 @@ class TestBackupManager:
         shutil.rmtree(temp_dir)
 
     def test_create_backups_zip_no_force_no_keep(self, preset_json):
-        preset_manager = PresetManager(preset_json)
-        presets = preset_manager.get_presets()
-        backup_manager = BackupManager()
+        Preset.load_file(preset_json)
+        presets = Preset.get_presets()
         for preset in presets:
             print(preset)
-            for backup in backup_manager.create_backups(preset, False, False):
+            for backup in preset.create_backups(False, False):
                 if isinstance(backup, ProgressInfo):
                     continue
                 assert isinstance(backup, Backup)
@@ -81,14 +148,13 @@ class TestBackupManager:
                     )  # allows Path and its children to equate. :)
 
     def test_create_backups_zip_force_no_keep(self, preset_json):
-        preset_manager = PresetManager(preset_json)
-        presets = preset_manager.get_presets()
-        backup_manager = BackupManager()
+        Preset.load_file(preset_json)
+        presets = Preset.get_presets()
         for i in range(4):
             for preset in presets:
                 for destination in preset._destinations:
                     destination.date_format = "%Y_%m_%d__%H%M%S%f"  # these need to include the microseconds due to the rate at which backups are created.
-                for backup in backup_manager.create_backups(preset, True, False):
+                for backup in preset.create_backups(True, False):
                     if isinstance(backup, ProgressInfo):
                         continue
                     assert isinstance(backup, Backup)
@@ -102,15 +168,14 @@ class TestBackupManager:
         assert testFolder_count == 3
 
     def test_create_backups_zip_force_keep(self, preset_json):
-        preset_manager = PresetManager(preset_json)
-        presets = preset_manager.get_presets()
-        backup_manager = BackupManager()
+        Preset.load_file(preset_json)
+        presets = Preset.get_presets()
         for i in range(4):
             print(i)
             for preset in presets:
                 for destination in preset._destinations:
                     destination.date_format = "%Y_%m_%d__%H%M%S%f"  # these need to include the microseconds due to the rate at which backups are created.
-                for backup in backup_manager.create_backups(preset, True, True):
+                for backup in preset.create_backups(True, True):
                     if isinstance(backup, ProgressInfo):
                         continue
                     assert isinstance(backup, Backup)
@@ -124,18 +189,17 @@ class TestBackupManager:
         assert testFolder_count == 4
 
     def test_metafile_generation(self, preset_json):
-        preset_manager = PresetManager(preset_json)
-        preset = preset_manager["testFolder"]
+        Preset.load_file(preset_json)
+        preset = Preset.get_preset("testFolder")
         target = preset._targets[0]
         destination = preset._destinations[0]
-        backup_manager = BackupManager()
         md5_hash = None
-        for i in backup_manager.create_md5_hash(target):
+        for i in preset.create_md5_hash(target):
             if isinstance(i, ProgressInfo):
                 continue
             if isinstance(i, str):
                 md5_hash = i
-        metafile_str = backup_manager._create_metafile(target, destination, md5_hash)
+        metafile_str = preset._create_metafile(target, destination, md5_hash)
 
         metafile_json = json.loads(metafile_str)
 
@@ -147,11 +211,10 @@ class TestBackupManager:
         assert metafile_json['content_type'] == "folder"
 
     def test_restore_backup(self, preset_json):
-        preset_manager = PresetManager(preset_json)
-        backup_manager = BackupManager()
+        Preset.load_file(preset_json)
 
-        for preset in preset_manager.get_presets():
-            for backup in backup_manager.create_backups(preset):
+        for preset in Preset.get_presets():
+            for backup in preset.create_backups(preset):
                 if isinstance(backup, Backup):
                     if backup.target.is_dir():
                         shutil.rmtree(backup.target)

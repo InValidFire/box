@@ -1,7 +1,7 @@
 import json
 from pathlib import Path
 
-from yabu_cmd import Destination, BackupManager, PresetManager
+from yabu_cmd import Destination, Preset
 
 
 class TestDestination:
@@ -21,11 +21,9 @@ class TestDestination:
             assert str(destination.path) == destination_json['path']
 
     def test_get_backups(self, preset_json):
-        preset_manager = PresetManager(preset_json)
-        backup_manager = BackupManager()
-
-        for preset in preset_manager.get_presets():
-            for _ in backup_manager.create_backups(preset):
+        Preset.load_file(preset_json)
+        for preset in Preset.get_presets():
+            for _ in preset.create_backups(preset):
                 pass
 
             for destination in preset._destinations:

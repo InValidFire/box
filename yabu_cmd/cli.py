@@ -35,8 +35,8 @@ def presets(obj):
     Args:
         obj (dict): Click's context object.
     """
-    handler = CommandHandler(obj["config"])
     try:
+        handler = CommandHandler(obj["config"])
         print(f"Loading presets from {obj['config']}\n\nPresets:")
         for preset in handler.list_presets():
             try:
@@ -49,6 +49,10 @@ def presets(obj):
     except ValueError:
         print(
             f"The path exists, it doesn't seem to be a .json file though: '{obj['config']}'"
+        )
+    except IsADirectoryError:
+        print(
+            f"The path exists, but this looks like a directory. Please ensure the path is correct: {obj['config']}"
         )
 
 

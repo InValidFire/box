@@ -1,13 +1,12 @@
-from yabu_cmd import PresetManager, BackupManager
+from yabu_cmd.controller.preset import Preset
 
 
 class TestBackup:
     def test_backup_str(self, preset_json):
-        preset_manager = PresetManager(preset_json)
-        presets = preset_manager.get_presets()
-        backup_manager = BackupManager()
-        backup_manager.create_backups(presets[0])
-        for backup in backup_manager.get_backups(presets[0]):
+        Preset.load_file(preset_json)
+        presets = Preset.get_presets()
+        presets[0].create_backups()
+        for backup in presets[0].get_backups():
             backup_str = str(backup)
             print(repr(backup_str))
             correct_output = f"""Backup:

@@ -12,7 +12,7 @@ from zipfile import ZipFile, ZIP_DEFLATED
 from .destination import Destination, VALID_FILE_FORMATS
 from .backup import Backup
 from .progress_info import ProgressInfo
-from ..exceptions import BackupAbortedException, BackupHashException, YabuException, TargetNotFoundException, DestinationNotFoundException, FormatException, InvalidPresetConfig
+from ..exceptions import BackupAbortedException, BackupHashException, YabuException, PresetNotFoundException, TargetNotFoundException, DestinationNotFoundException, FormatException, InvalidPresetConfig
 
 from jsonschema import validate, ValidationError
 
@@ -134,6 +134,17 @@ class Preset:
             self._destinations.append(destination)
         else:
             raise TypeError(destination)
+
+    def save(self):
+        """Save the preset to the config file.
+
+        Args:
+            config_file (Path): The path to the config file.
+        """
+        _preset_container.save(self)
+
+    def delete(self):
+        _preset_container.delete_preset(self)
 
     def remove_target(self, target: Path):
         """Remove a target from the list of targets for the preset.
@@ -516,7 +527,28 @@ schema = {
 }
 
 
-class PresetContainer:
+class PresetEncoder(json.JSONEncoder):
+    """
+    Handles encoding of Preset objects into JSON formatting.
+    """
+
+    def default(self, o):
+        if isinstance(o, Preset):
+            return {"targets": o._targets, "destinations": o._destinations}
+        if isinstance(o, Destination):
+            return {
+                "path": o.path,
+                "max_backup_count": o.max_backup_count,
+                "file_format": o.file_format,
+                "date_format": o.date_format,
+                "name_separator": o.name_separator,
+            }
+        if isinstance(o, Path):
+            return str(o)
+        return json.JSONEncoder.default(self, o)
+
+
+class PresetConfigFile:
     def __init__(self) -> None:
         self._presets: dict[str, Preset] = {}
 
@@ -524,19 +556,39 @@ class PresetContainer:
     def presets(self):
         return list(self._presets.values())
 
+    def save(self, preset: Preset):
+        self._presets[preset.name] = preset
+        presets_dict = self._format_presets_dict(self._presets)
+        with self.config_file.open("w+") as fp:
+            print(json.dumps(presets_dict, cls=PresetEncoder))
+            json.dump(presets_dict, fp, cls=PresetEncoder)
+
     def verify_file(self, config_file: Path):
         try:  # validate the JSON against the schema
             with config_file.open("r") as fp:
                 presets_data = json.load(fp)
             validate(presets_data, schema=schema)
         except json.JSONDecodeError:
-            raise InvalidPresetConfig(
+            raise ValueError(
                 "JSON file could not be decoded. Is the format correct?"
             )
         except ValidationError:
             raise InvalidPresetConfig(
                 "JSON file does not match schema. Do you have all required values?"
             )
+
+    def _format_presets_dict(self, presets: dict[str, Preset]):
+        """Formats the given presets dictionary to the required format.
+        Intended to use before dumping dictionary to file.
+
+        Args:
+            presets (dict[str, Preset]): The dictionary to format.
+
+        Returns:
+            dict: The new formatted dictionary.
+        """
+        presets_dict = {"format": self.format, "presets": presets}
+        return presets_dict
 
     def load(self, config_file: Path):
         """Internal method to load presets from the config file into a
@@ -547,9 +599,11 @@ class PresetContainer:
                 the preset name as the key.
         """
         self.verify_file(config_file)
+        self.config_file = config_file
         self._presets = {}
         with config_file.open("r") as fp:
             presets_dict = json.load(fp)
+            self.format = presets_dict["format"]
         for preset_name in presets_dict["presets"]:
             preset_dict = presets_dict["presets"][preset_name]
             preset = Preset(preset_name)
@@ -561,8 +615,29 @@ class PresetContainer:
             self._presets[preset_name] = preset
         return list(self._presets.values())
 
+    def delete_preset(self, preset: Preset) -> None:
+        """Delete a preset from the preset config file.
+
+        Args:
+            preset (Preset): The preset to remove.
+
+        Raises:
+            PresetNotFoundException: If the preset is not found in the config
+                file.
+        """
+        try:
+            self._presets.pop(preset.name)
+        except KeyError as e:
+            raise PresetNotFoundException(preset.name) from e
+        presets_dict = self._format_presets_dict(self._presets)
+        with self.config_file.open("w+") as fp:
+            json.dump(presets_dict, fp, cls=PresetEncoder)
+
     def __getitem__(self, key: str) -> Preset:
-        return self._presets[key]
+        try:
+            return self._presets[key]
+        except KeyError as e:
+            raise PresetNotFoundException(key) from e
 
 
-_preset_container = PresetContainer()
+_preset_container = PresetConfigFile()
