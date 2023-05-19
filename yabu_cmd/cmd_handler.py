@@ -69,7 +69,7 @@ class CommandHandler:
             destination = Destination(
                 location, file_format=file_format
             )  # convert location path to a destination object.
-            return destination.get_backups(location)
+            return destination.get_backups()
 
     def create_backups(
         self, preset_name: str, force: bool, keep: bool
