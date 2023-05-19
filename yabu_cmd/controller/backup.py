@@ -28,6 +28,7 @@ def rmdir(path: Path):
             rmdir(file)
     path.rmdir()
 
+
 @dataclass
 class Backup:
     name: str = None
