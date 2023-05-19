@@ -7,7 +7,7 @@ import pytest
 from yabu_cmd.controller.preset import Preset
 from yabu_cmd.controller.destination import Destination
 from yabu_cmd.controller.backup import Backup
-from yabu_cmd.exceptions.exceptions import PresetNotFoundException
+from yabu_cmd.exceptions.exceptions import PresetNotFoundException, BackupHashException, YabuException
 from yabu_cmd.controller.progress_info import ProgressInfo
 
 
@@ -188,6 +188,17 @@ class TestPreset:
         assert testFile_count == 4
         assert testFolder_count == 4
 
+    def test_create_backup_already_exists(self, preset_json):
+        Preset.load_file(preset_json)
+        presets = Preset.get_presets()
+        for preset in presets:
+            for _ in preset.create_backups():
+                continue
+            with pytest.raises(BackupHashException):
+                for exception in preset.create_backups():
+                    if isinstance(exception, YabuException):
+                        raise exception
+
     def test_metafile_generation(self, preset_json):
         Preset.load_file(preset_json)
         preset = Preset.get_preset("testFolder")
@@ -214,7 +225,7 @@ class TestPreset:
         Preset.load_file(preset_json)
 
         for preset in Preset.get_presets():
-            for backup in preset.create_backups(preset):
+            for backup in preset.create_backups():
                 if isinstance(backup, Backup):
                     if backup.target.is_dir():
                         shutil.rmtree(backup.target)
@@ -226,3 +237,15 @@ class TestPreset:
                     backup.restore()
 
                     assert backup.target.exists()
+
+    def test_restore_backup_overwrite_directory(self, preset_json):
+        Preset.load_file(preset_json)
+        for preset in Preset.get_presets():
+            if preset.name != "testFolder":
+                continue
+            for backup in preset.create_backups():
+                if not isinstance(backup, Backup):
+                    continue
+                temp_file = preset._targets[0].joinpath("temp")
+                backup.restore()
+                assert not temp_file.exists()
