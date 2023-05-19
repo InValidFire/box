@@ -5,7 +5,7 @@ from datetime import datetime
 
 from zipfile import ZipFile, BadZipFile
 
-from ..exceptions import NotABackupException, FormatException, ContentTypeException
+from .exceptions import NotABackupException, FormatException, ContentTypeException
 
 __all__ = ["Backup"]
 

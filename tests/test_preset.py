@@ -4,11 +4,11 @@ import json
 
 import pytest
 
-from yabu_cmd.controller.preset import Preset
-from yabu_cmd.controller.destination import Destination
-from yabu_cmd.controller.backup import Backup
+from yabu_cmd.preset import Preset
+from yabu_cmd.destination import Destination
+from yabu_cmd.backup import Backup
 from yabu_cmd.exceptions.exceptions import PresetNotFoundException, BackupHashException, YabuException, DestinationLoopException
-from yabu_cmd.controller.progress_info import ProgressInfo
+from yabu_cmd.progress_info import ProgressInfo
 
 
 class TestPreset:

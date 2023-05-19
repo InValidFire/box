@@ -7,7 +7,7 @@ from .backup import Backup
 from .progress_info import ProgressInfo
 from .destination import Destination
 
-from ..exceptions import YabuException, TargetMatchException
+from .exceptions import YabuException, TargetMatchException
 
 __all__ = ["CommandHandler"]
 

@@ -1,6 +1,6 @@
 from pathlib import Path
-from ..controller.backup import Backup
-from ..exceptions import NotABackupException, FormatException
+from .backup import Backup
+from .exceptions import NotABackupException, FormatException
 VALID_FILE_FORMATS = ["zip"]
 
 __all__ = ["Destination"]
