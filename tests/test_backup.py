@@ -1,4 +1,4 @@
-from yabu_cmd.controller.preset import Preset
+from yabu_cmd import Preset
 
 
 class TestBackup:

@@ -12,7 +12,7 @@ from zipfile import ZipFile, ZIP_DEFLATED
 from .destination import Destination, VALID_FILE_FORMATS
 from .backup import Backup
 from .progress_info import ProgressInfo
-from ..exceptions import BackupAbortedException, BackupHashException, YabuException, PresetNotFoundException, TargetNotFoundException, DestinationNotFoundException, DestinationLoopException, FormatException, InvalidPresetConfig
+from .exceptions import BackupAbortedException, BackupHashException, YabuException, PresetNotFoundException, TargetNotFoundException, DestinationNotFoundException, DestinationLoopException, FormatException, InvalidPresetConfig
 
 from jsonschema import validate, ValidationError
 
