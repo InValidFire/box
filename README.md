@@ -59,8 +59,6 @@ YABU loads a file in your HOME directory called `.yabu_config.json`, it should h
 
 `yabu restore --source=<preset|backups_folder> [--destination <destination_path>]` - select a backup to restore from the `preset` or `backups_folder` path. The `backups_folder` path should contain completed backups from the utility. If the `destination` is given, the original backup's target will not be used and the backup will instead be restored to the custom destination.
 
-`yabu modify <preset>` - modify the `preset`. if the preset does not exist, create a blank one.
-
 ## Development and Contribution
 
 To run the program in a development environment, first install the program using pip.
