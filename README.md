@@ -1,6 +1,6 @@
 # BOX
 
-BOX stands for "Yet Another Backup Utility"
+Box is a command line tool that enables the easy creation of rolling backups using user-defined presets.
 
 ## Installation
 
