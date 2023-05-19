@@ -1,58 +1,82 @@
-# backup_cmd
-A command-line tool to easily create backups of selected folders.
+# YABU
 
-# Setup
+YABU stands for "Yet Another Backup Utility"
 
-In order to use this, you need to make a folder in your home directory labeled ".storage".
+## Installation
 
-Inside the .storage folder, you'll have a file named ".backup_data.json" where you'll specify what to backup and where to store it.
+### Pre-Installation
 
-Here's an example of my current .backup_data.json:
+Ensure you have the following tools configured and working on your machine.
+- Python (3.7 or greater)
+- Git
+
+Follow these steps to install this utility.
+
+1. Clone the repository using git:
+	- `git clone https://github.com/InValidFire/backup_cmd.git` (https)
+	- `git clone git@github.com:InValidFire/backup_cmd.git` (ssh)
+2. Navigate into the root of the repository.
+3. Use pip to install the package locally.
+	- `python -m pip install .`
+
+> Note: Depending on your system's configuration, the exact commands to run may vary.
+
+### Post-Installation and Configuration
+
+YABU loads a file in your HOME directory called `.yabu_config.json`, it should have the following structure:
+
 ```json
 {
-    "minecraft": {
-        "targets": [
-            "C:\\Users\\InValidFire\\AppData\\Roaming\\.minecraft\\saves\\main_world",
-            "C:\\Users\\InValidFire\\AppData\\Roaming\\.minecraft\\saves\\building_world"
-        ],
-        "destinations": [
-            {
-                "path": "C:\\Users\\InValidFire\\.storage\\backups",
-                "max_count": 3
-            },
-            {
-                "path": "D:\\backups",
-                "max_count": 10
-            }
-        ]
-    }
+	"format": 1,
+	"presets": {
+		"<preset_name>": {
+			"targets": [
+				"C:\\Target\\Path\\One",
+				"C:\\Target\\Path\\Two"
+			],
+			"destinations": [
+				{
+					"path": "E:\\Destination\\Path",
+					"file_format": "zip",
+					"name_separator": "-",
+					"date_format": "%d_%m_%y__%H%M%S",
+					"max_backup_count": 10
+				}
+			]
+		}
+	}
 }
 ```
-preset:
-targets (list) - the target directories to backup
 
-destinations (list)
+> If you'd like to see the JSON Schema used to validate this file, see here: [presets.json JSON Schema](docs/presets_schema.json)
 
-path (str) - the destination to copy the target(s) to.
+---
 
-max_count (int) - the maximum count of backups to store. (oldest gets deleted after this many backups are made)
+## Usage
+`yabu list` - list all presets found in the config file.
 
-# Usage
+`yabu backup [--force] [--keep] <preset>` - create a backup using the `preset`. if the `force` flag is set, force the backup creation even if it was already saved. if the `keep` flag is set, keep backups beyond the max_backup_count.
 
-## Backup
+`yabu restore --source=<preset|backups_folder> [--destination <destination_path>]` - select a backup to restore from the `preset` or `backups_folder` path. The `backups_folder` path should contain completed backups from the utility. If the `destination` is given, the original backup's target will not be used and the backup will instead be restored to the custom destination.
 
-Simply run main.py with the preset of which backup to run. For example:
+## Development and Contribution
 
-`python main.py minecraft`
+To run the program in a development environment, first install the program using pip.
 
-Running this command will add every file found in the target directory to a zip, and place that zip in each of the destinations.
+`pip install -e <repo-directory>`
 
-## Restore
+Then you can run the command under the `yabu` command name. :)
 
-If you wish to restore a backup add a `-r` or `--restore` flag:
+---
 
-`python main.py minecraft -r`
+This program utilizes `pytest` for testing, with `pytest-cov`, ensure you have them both installed:
 
-It will list the choices in all accessible backup locations for you to choose from, and restore your chosen backup.
+`pip install pytest pytest-cov`
 
-This can of course be aliased.
+To run all tests in the tests directory, run the following command in the repo root directory.
+
+`pytest --cov=yabu_cmd ./tests`
+
+If you'd like the report to be generated into an HTML document (for detailed information), run this command instead:
+
+`pytest --cov=yabu_cmd ./tests --cov-report=html`

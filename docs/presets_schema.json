@@ -1,0 +1,53 @@
+{
+    "$schema": "http://json-schema.org/draft-06/schema#",
+    "$ref": "#/definitions/Root",
+    "definitions": {
+        "Root": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "format": {"type": "integer"},
+                "presets": {
+                    "type": "object",
+                    "patternProperties": {
+                        "^[a-zA-Z0-9_]+$": {"$ref": "#/definitions/Preset"}
+                    }
+                }
+            },
+            "required": ["format"],
+            "minProperties": 2,
+            "title": "Root"
+        },
+        "Preset": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "targets": {
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "minItems": 1
+                },
+                "destinations": {
+                    "type": "array",
+                    "items": {"$ref": "#/definitions/Destination"},
+                    "minItems": 1
+                }
+            },
+            "required": ["destinations", "targets"],
+            "title": "Preset"
+        },
+        "Destination": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "path": {"type": "string"},
+                "max_backup_count": {"type": "integer"},
+                "file_format": {"type": "string", "enum": ["zip"]},
+                "date_format": {"type": "string"},
+                "name_separator": {"type": "string"}
+            },
+            "required": ["path"],
+            "title": "Destination"
+        }
+    }
+}
