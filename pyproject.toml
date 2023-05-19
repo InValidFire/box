@@ -1,5 +1,5 @@
 [project]
-name = "box"
+name = "box-cmd"
 version = "2.0.0"
 authors = [
   { name="Riley Housden", email="riley.t.housden@gmail.com" },
