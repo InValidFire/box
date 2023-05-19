@@ -20,7 +20,7 @@ from tqdm import tqdm
 
 
 @click.group()
-@click.option("--config", "-c", default=Path.home().joinpath(".yabu_presets.json"))
+@click.option("--config", "-c", default=Path.home().joinpath(".box_presets.json"))
 @click.pass_context
 def cli(ctx: click.Context, config):
     ctx.ensure_object(dict)
@@ -56,13 +56,12 @@ def presets(obj):
             f"The path exists, but this looks like a directory. Please ensure the path is correct: {obj['config']}"
         )
 
-
 @cli.command(help="Create a backup of a preset.")
 @click.option("--force", "-f", default=False, help="Force the creation of a backup, even if a duplicate already exists.")
 @click.option("--keep", "-k", default=False, help="Keep the backup even if it surpasses the preset's max_backup_count.")
 @click.argument("preset")
 @click.pass_obj
-def backup(obj, preset: str, force: bool, keep: bool):
+def pack(obj, preset: str, force: bool, keep: bool):
     """Create a backup of a preset's targets.
 
     Args:
@@ -76,6 +75,9 @@ def backup(obj, preset: str, force: bool, keep: bool):
     Raises:
         backup: If a problem is found in the backup generator, the exceptions
             will be raised here.
+
+    Usage:
+        `box pack <preset> [--force] [--keep]`
     """
     print("Creating backups...")
     handler = CommandHandler(obj["config"])
@@ -132,7 +134,7 @@ def backup(obj, preset: str, force: bool, keep: bool):
 @click.option("--source", required=True, help="The backup source, either a preset name, or a folder where backups are stored.")
 @click.option("--destination", required=False, help="The destination to restore to. Not required, backups will try to restore to their original location by default.")
 @click.pass_obj
-def restore(obj, source: str, destination: str = None):
+def unpack(obj, source: str, destination: str = None):
     """Restore a backup to its target or a custom destination.
 
     Args:
@@ -143,7 +145,7 @@ def restore(obj, source: str, destination: str = None):
         destination (bool) [Optional]: The destination path to restore to.
 
     Usage:
-        `yabu restore <source> [destination]`
+        `box unpack --source <source> [--destination destination]`
     """
     handler = CommandHandler(obj["config"])
     if source not in handler.list_presets() and Path(source).exists():

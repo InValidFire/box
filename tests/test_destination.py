@@ -1,7 +1,7 @@
 import json
 from pathlib import Path
 
-from yabu_cmd import Destination, Preset
+from box_cmd import Destination, Preset
 
 
 class TestDestination:

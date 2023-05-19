@@ -4,11 +4,11 @@ import json
 
 import pytest
 
-from yabu_cmd.preset import Preset
-from yabu_cmd.destination import Destination
-from yabu_cmd.backup import Backup
-from yabu_cmd.exceptions.exceptions import PresetNotFoundException, BackupHashException, YabuException, DestinationLoopException
-from yabu_cmd.progress_info import ProgressInfo
+from box_cmd.preset import Preset
+from box_cmd.destination import Destination
+from box_cmd.backup import Backup
+from box_cmd.exceptions.exceptions import PresetNotFoundException, BackupHashException, BoxException, DestinationLoopException
+from box_cmd.progress_info import ProgressInfo
 
 
 class TestPreset:
@@ -118,7 +118,7 @@ class TestPreset:
         for preset in presets:
             with pytest.raises(DestinationLoopException):
                 for exception in preset.create_backups():
-                    if not isinstance(exception, YabuException):
+                    if not isinstance(exception, BoxException):
                         continue
                     raise exception
 
@@ -195,7 +195,7 @@ class TestPreset:
                 continue
             with pytest.raises(BackupHashException):
                 for exception in preset.create_backups():
-                    if isinstance(exception, YabuException):
+                    if isinstance(exception, BoxException):
                         raise exception
 
     def test_metafile_generation(self, preset_json):

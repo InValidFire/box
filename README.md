@@ -1,6 +1,6 @@
-# YABU
+# BOX
 
-YABU stands for "Yet Another Backup Utility"
+BOX stands for "Yet Another Backup Utility"
 
 ## Installation
 
@@ -23,7 +23,7 @@ Follow these steps to install this utility.
 
 ### Post-Installation and Configuration
 
-YABU loads a file in your HOME directory called `.yabu_config.json`, it should have the following structure:
+BOX loads a file in your HOME directory called `.box_config.json`, it should have the following structure:
 
 ```json
 {
@@ -53,11 +53,11 @@ YABU loads a file in your HOME directory called `.yabu_config.json`, it should h
 ---
 
 ## Usage
-`yabu list` - list all presets found in the config file.
+`box list` - list all presets found in the config file.
 
-`yabu backup [--force] [--keep] <preset>` - create a backup using the `preset`. if the `force` flag is set, force the backup creation even if it was already saved. if the `keep` flag is set, keep backups beyond the max_backup_count.
+`box backup [--force] [--keep] <preset>` - create a backup using the `preset`. if the `force` flag is set, force the backup creation even if it was already saved. if the `keep` flag is set, keep backups beyond the max_backup_count.
 
-`yabu restore --source=<preset|backups_folder> [--destination <destination_path>]` - select a backup to restore from the `preset` or `backups_folder` path. The `backups_folder` path should contain completed backups from the utility. If the `destination` is given, the original backup's target will not be used and the backup will instead be restored to the custom destination.
+`box restore --source=<preset|backups_folder> [--destination <destination_path>]` - select a backup to restore from the `preset` or `backups_folder` path. The `backups_folder` path should contain completed backups from the utility. If the `destination` is given, the original backup's target will not be used and the backup will instead be restored to the custom destination.
 
 ## Development and Contribution
 
@@ -65,7 +65,7 @@ To run the program in a development environment, first install the program using
 
 `pip install -e <repo-directory>`
 
-Then you can run the command under the `yabu` command name. :)
+Then you can run the command under the `box` command name. :)
 
 ---
 
@@ -75,8 +75,8 @@ This program utilizes `pytest` for testing, with `pytest-cov`, ensure you have t
 
 To run all tests in the tests directory, run the following command in the repo root directory.
 
-`pytest --cov=yabu_cmd ./tests`
+`pytest --cov=box_cmd ./tests`
 
 If you'd like the report to be generated into an HTML document (for detailed information), run this command instead:
 
-`pytest --cov=yabu_cmd ./tests --cov-report=html`
+`pytest --cov=box_cmd ./tests --cov-report=html`
