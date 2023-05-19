@@ -1,4 +1,4 @@
-from yabu_cmd import Preset
+from box_cmd import Preset
 
 
 class TestBackup:

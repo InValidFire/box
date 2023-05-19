@@ -2,7 +2,7 @@ from pathlib import Path
 
 from click.testing import CliRunner
 
-from yabu_cmd.cli import cli
+from box_cmd.cli import cli
 
 
 class TestCLI:

@@ -12,7 +12,7 @@ from zipfile import ZipFile, ZIP_DEFLATED
 from .destination import Destination, VALID_FILE_FORMATS
 from .backup import Backup
 from .progress_info import ProgressInfo
-from .exceptions import BackupAbortedException, BackupHashException, YabuException, PresetNotFoundException, TargetNotFoundException, DestinationNotFoundException, DestinationLoopException, FormatException, InvalidPresetConfig
+from .exceptions import BackupAbortedException, BackupHashException, BoxException, PresetNotFoundException, TargetNotFoundException, DestinationNotFoundException, DestinationLoopException, FormatException, InvalidPresetConfig
 
 from jsonschema import validate, ValidationError
 
@@ -222,7 +222,7 @@ class Preset:
                 if target.is_dir():
                     file_count = (
                         count_files(target) + 1
-                    )  # adding one for the .yabu.meta
+                    )  # adding one for the .box.meta
                     yield ProgressInfo(0, msg=f"Zipping {target}", total=file_count)
                     for item in target.glob("**/*"):
                         yield ProgressInfo(
@@ -236,8 +236,8 @@ class Preset:
                     yield ProgressInfo(msg=f"Zipping {target}")
                 else:
                     raise ValueError(target)
-                zip_file.writestr(".yabu.meta", metafile_str)
-                yield ProgressInfo(msg="Zipping .yabu.meta")
+                zip_file.writestr(".box.meta", metafile_str)
+                yield ProgressInfo(msg="Zipping .box.meta")
         finally:
             yield archive_path
 
@@ -264,7 +264,7 @@ class Preset:
         self,
         force=False,
         keep=False,
-    ) -> Generator[Backup | YabuException | ProgressInfo, None, None]:
+    ) -> Generator[Backup | BoxException | ProgressInfo, None, None]:
         """Trigger backup creation of all available targets in a preset to all
         available destinations in a preset. Automatically rotates backups to
         keep within the max_backup_count specified.

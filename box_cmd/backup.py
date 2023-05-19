@@ -68,15 +68,15 @@ class Backup:
             target (Path): The target to restore to.
         """
         Backup.extract_zip_archive(backup.path, target)
-        target.joinpath(".yabu.meta").unlink()
+        target.joinpath(".box.meta").unlink()
 
     @classmethod
     def _load_zip(cls, file_path: Path):
         try:
             with ZipFile(file_path, "r") as zip_file:
-                if ".yabu.meta" not in zip_file.namelist():
+                if ".box.meta" not in zip_file.namelist():
                     raise NotABackupException(file_path)
-                metafile = zip_file.read(".yabu.meta").decode("utf-8")
+                metafile = zip_file.read(".box.meta").decode("utf-8")
                 metafile = json.loads(metafile)
 
                 name_separator = metafile['name_separator']

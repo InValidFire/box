@@ -7,7 +7,7 @@ from .backup import Backup
 from .progress_info import ProgressInfo
 from .destination import Destination
 
-from .exceptions import YabuException, TargetMatchException
+from .exceptions import BoxException, TargetMatchException
 
 __all__ = ["CommandHandler"]
 
@@ -73,7 +73,7 @@ class CommandHandler:
 
     def create_backups(
         self, preset_name: str, force: bool, keep: bool
-    ) -> Generator[Backup | YabuException | ProgressInfo, None, None]:
+    ) -> Generator[Backup | BoxException | ProgressInfo, None, None]:
         """Create backups of all targets in the preset.
         A backup is stored in each destination following any destination specific
         settings.
@@ -96,7 +96,7 @@ class CommandHandler:
 
         Yields:
             Backup: the backup created.
-            YabuException: any exceptions raised from failed backups.
+            BoxException: any exceptions raised from failed backups.
             ProgressInfo: updates to the backup progress from the model.
         """
         preset: Preset = Preset.get_preset(preset_name)

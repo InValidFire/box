@@ -1,7 +1,7 @@
 from pathlib import Path
 
 
-class YabuException(Exception):
+class BoxException(Exception):
     def __init__(self, msg) -> None:
         super().__init__(msg)
         self.message = msg
@@ -9,19 +9,19 @@ class YabuException(Exception):
     pass
 
 
-class NotABackupException(YabuException):
+class NotABackupException(BoxException):
     pass
 
 
-class PresetException(YabuException):
+class PresetException(BoxException):
     pass
 
 
-class ContentTypeException(YabuException):
+class ContentTypeException(BoxException):
     pass
 
 
-class BackupException(YabuException):
+class BackupException(BoxException):
     def __init__(self, msg, target: Path = None, destination: Path = None) -> None:
         self.target = target
         self.destination = destination
