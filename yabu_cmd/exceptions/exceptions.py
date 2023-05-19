@@ -28,6 +28,10 @@ class BackupException(YabuException):
         super().__init__(msg)
 
 
+class DestinationLoopException(BackupException):
+    pass
+
+
 class BackupAbortedException(BackupException):
     pass
 

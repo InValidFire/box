@@ -7,7 +7,7 @@ import pytest
 from yabu_cmd.controller.preset import Preset
 from yabu_cmd.controller.destination import Destination
 from yabu_cmd.controller.backup import Backup
-from yabu_cmd.exceptions.exceptions import PresetNotFoundException, BackupHashException, YabuException
+from yabu_cmd.exceptions.exceptions import PresetNotFoundException, BackupHashException, YabuException, DestinationLoopException
 from yabu_cmd.controller.progress_info import ProgressInfo
 
 
@@ -79,13 +79,14 @@ class TestPreset:
             preset.delete()
 
     @pytest.fixture
-    def setup_create_backups_force_no_keep(self):
+    def destination_loop(self):
         import json
 
         temp_dir = Path("temp")
         folder = temp_dir.joinpath("folder")
-        file = folder.joinpath("file.txt")
-        folder.mkdir(parents=True)
+        sub_folder = folder.joinpath("sub_folder")
+        file = sub_folder.joinpath("file.txt")
+        sub_folder.mkdir(parents=True)
         file.touch()  # set up rudamentary test environment
         file.write_text("This is a test file. :)")  # :)
         preset_json_file = Path(temp_dir.joinpath("presets.json"))
@@ -97,21 +98,9 @@ class TestPreset:
                     "targets": [str(folder.absolute())],
                     "destinations": [
                         {
-                            "path": str(temp_dir),
+                            "path": str(sub_folder.absolute()),
                             "file_format": "zip",
-                            "date_format": "%Y_%m_%d__%H%M%S%f",
-                            "max_backup_count": 3,
-                            "name_separator": "-",
-                        }
-                    ],
-                },
-                "testFile": {
-                    "targets": [str(file.absolute())],
-                    "destinations": [
-                        {
-                            "path": str(temp_dir),
-                            "file_format": "zip",
-                            "date_format": "%d_%m_%y__%H%M%S%f",
+                            "date_format": "%Y_%m_%d__%H%M%S",
                             "max_backup_count": 3,
                             "name_separator": "-",
                         }
@@ -122,6 +111,16 @@ class TestPreset:
         preset_json_file.write_text(json.dumps(presets_data, indent=4))
         yield preset_json_file
         shutil.rmtree(temp_dir)
+
+    def test_create_backups_destination_loop(self, destination_loop):
+        Preset.load_file(destination_loop)
+        presets = Preset.get_presets()
+        for preset in presets:
+            with pytest.raises(DestinationLoopException):
+                for exception in preset.create_backups():
+                    if not isinstance(exception, YabuException):
+                        continue
+                    raise exception
 
     def test_create_backups_zip_no_force_no_keep(self, preset_json):
         Preset.load_file(preset_json)

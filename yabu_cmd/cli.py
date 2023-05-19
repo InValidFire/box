@@ -12,6 +12,7 @@ from yabu_cmd.exceptions import (
     ContentTypeException,
     TargetMatchException,
     BackupAbortedException,
+    DestinationLoopException
 )
 
 import click
@@ -120,6 +121,10 @@ def backup(obj, preset: str, force: bool, keep: bool):
         except BackupAbortedException as e:
             print(
                 f"Backup Aborted:\n\tTarget: {e.target}\n\tDestination: {e.destination}"
+            )
+        except DestinationLoopException as e:
+            print(
+                f"The destination: {e.destination} is contained within the target: {e.target}. Aborting..."
             )
 
 

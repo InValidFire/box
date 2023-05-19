@@ -12,7 +12,7 @@ from zipfile import ZipFile, ZIP_DEFLATED
 from .destination import Destination, VALID_FILE_FORMATS
 from .backup import Backup
 from .progress_info import ProgressInfo
-from ..exceptions import BackupAbortedException, BackupHashException, YabuException, PresetNotFoundException, TargetNotFoundException, DestinationNotFoundException, FormatException, InvalidPresetConfig
+from ..exceptions import BackupAbortedException, BackupHashException, YabuException, PresetNotFoundException, TargetNotFoundException, DestinationNotFoundException, DestinationLoopException, FormatException, InvalidPresetConfig
 
 from jsonschema import validate, ValidationError
 
@@ -311,6 +311,9 @@ class Preset:
                     msg=target, target=target, destination=destination
                 )  # cannot raise exceptions or the generator dies. we'll raise them later.
                 continue
+            if target in destination.path.parents or target == destination.path:  # ensure destination cannot be contained inside a target path.
+                destination.path.relative_to(target)
+                yield DestinationLoopException(msg="Destination is contained within the target.", target=target, destination=destination)
             if not destination.path.exists():
                 yield DestinationNotFoundException(
                     msg=destination.path, target=target, destination=destination
