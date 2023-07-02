@@ -282,6 +282,7 @@ class Preset:
             keep (bool, optional): Disable backup rotation. Defaults to False.
 
         Yields:
+            ProgressInfo: Contains file progress on backup creation.
             UnsupportedFormatException: If the destination's file_format is
                 unknown.
             BackupHashException: If the backup's content exactly matches the
@@ -289,6 +290,9 @@ class Preset:
             TargetNotFoundException: If the backup's target could not be found.
             DestinationNotFoundException: If the backup's destination could
                 not be found.
+            DestinationLoopException: If the Destination path is contained
+                within the target path.
+            FormatException: If the destination format is not supported.
             Backup: yields a backup of the target stored in the destination.
         """
         for target, destination in product(self._targets, self._destinations):
@@ -311,9 +315,10 @@ class Preset:
                     msg=target, target=target, destination=destination
                 )  # cannot raise exceptions or the generator dies. we'll raise them later.
                 continue
-            if target in destination.path.parents or target == destination.path:  # ensure destination cannot be contained inside a target path.
-                destination.path.relative_to(target)
-                yield DestinationLoopException(msg="Destination is contained within the target.", target=target, destination=destination)
+            if target in destination.path.parents or target == destination.path:
+                # ensure destination cannot be contained inside a target path.
+                yield DestinationLoopException(msg="Destination is contained within the target.", 
+                                                target=target, destination=destination)
             if not destination.path.exists():
                 yield DestinationNotFoundException(
                     msg=destination.path, target=target, destination=destination
@@ -360,7 +365,7 @@ class Preset:
         self, target: Path = None
     ) -> list[Backup]:
         """Get all backups from the Preset. If target is specified,
-        only get all backups of the target. Backups are sorted in ascending
+        only get all backups of the target. Backups areS sorted in ascending
         order.
 
         Args:
