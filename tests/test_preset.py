@@ -12,13 +12,6 @@ from box_cmd.progress_info import ProgressInfo
 
 
 class TestPreset:
-    @pytest.fixture
-    def new_preset(self):
-        preset = Preset("books")
-        preset.add_target(Path("tempFolder"))
-        preset.add_destination(Destination(Path("temp")))
-        return preset
-
     def test_get_presets(self, preset_json):
         Preset.load_file(preset_json)
         presets = Preset.get_presets()
