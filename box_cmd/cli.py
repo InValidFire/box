@@ -1,4 +1,5 @@
 import os
+import tomllib
 
 from pathlib import Path
 
@@ -18,8 +19,12 @@ from .exceptions import (
 import click
 from tqdm import tqdm
 
+with Path("pyproject.toml").open("rb") as fp:
+    __version__ = tomllib.load(fp)['project']['version']
+
 
 @click.group()
+@click.version_option(__version__)
 @click.option("--config", "-c", default=Path.home().joinpath(".box_presets.json"))
 @click.pass_context
 def cli(ctx: click.Context, config):
