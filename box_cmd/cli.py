@@ -1,5 +1,4 @@
 import os
-import tomllib
 
 from pathlib import Path
 
@@ -19,9 +18,7 @@ from .exceptions import (
 import click
 from tqdm import tqdm
 
-with Path("pyproject.toml").open("rb") as fp:
-    __version__ = tomllib.load(fp)['project']['version']
-
+__version__ = "2.0.2"
 
 @click.group()
 @click.version_option(__version__)
