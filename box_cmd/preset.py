@@ -296,6 +296,16 @@ class Preset:
             Backup: yields a backup of the target stored in the destination.
         """
         for target, destination in product(self._targets, self._destinations):
+            if not target.exists():
+                yield TargetNotFoundException(
+                    msg=target, target=target, destination=destination
+                )  # cannot raise exceptions or the generator dies. we'll raise them later.
+                continue
+            if not destination.path.exists():
+                yield DestinationNotFoundException(
+                    msg=destination.path, target=target, destination=destination
+                )
+                continue
             md5_hash = None
             for i in self.create_md5_hash(target):
                 if isinstance(i, ProgressInfo):
@@ -310,20 +320,10 @@ class Preset:
                         msg=latest_backup.path, target=target, destination=destination
                     )
                     continue
-            if not target.exists():
-                yield TargetNotFoundException(
-                    msg=target, target=target, destination=destination
-                )  # cannot raise exceptions or the generator dies. we'll raise them later.
-                continue
             if target in destination.path.parents or target == destination.path:
                 # ensure destination cannot be contained inside a target path.
                 yield DestinationLoopException(msg="Destination is contained within the target.", 
                                                 target=target, destination=destination)
-            if not destination.path.exists():
-                yield DestinationNotFoundException(
-                    msg=destination.path, target=target, destination=destination
-                )
-                continue
             archive_name = (
                 target.stem
                 + destination.name_separator
