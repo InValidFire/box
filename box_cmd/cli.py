@@ -19,7 +19,7 @@ from .exceptions import (
 import click
 from tqdm import tqdm
 
-__version__ = "2.0.2"
+__version__ = "2.0.3"
 
 @click.group()
 @click.version_option(__version__)
