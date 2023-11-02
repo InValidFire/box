@@ -1,4 +1,5 @@
 import os
+import platform
 
 from pathlib import Path
 
@@ -53,7 +54,12 @@ def presets(obj):
         print(
             f"The path exists, it doesn't seem to be a .json file though: '{obj['config']}'"
         )
-    except IsADirectoryError:
+    except PermissionError:
+        if platform.system() == "Windows":
+            print("It appears you may not have permission to access this location, or that the given location is not a file.")
+        else:
+            print("It appears you do not have permission to access this location.")
+    except (IsADirectoryError):
         print(
             f"The path exists, but this looks like a directory. Please ensure the path is correct: {obj['config']}"
         )

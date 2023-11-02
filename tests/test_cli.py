@@ -28,7 +28,9 @@ class TestCLI:
         runner = CliRunner()
         result = runner.invoke(cli, "--config temp presets".split())
         assert (
-            "The path exists, but this looks like a directory. Please ensure the path is correct:"
+            "The path exists, but this looks like a directory. Please ensure the path is correct:" in result.output 
+            or 
+            "It appears you may not have permission to access this location, or that the given location is not a file." 
             in result.output
         )
 
