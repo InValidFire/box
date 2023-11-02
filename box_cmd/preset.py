@@ -12,7 +12,7 @@ from zipfile import ZipFile, ZIP_DEFLATED
 from .destination import Destination, VALID_FILE_FORMATS
 from .backup import Backup
 from .progress_info import ProgressInfo
-from .exceptions import BackupAbortedException, BackupHashException, BoxException, PresetNotFoundException, TargetNotFoundException, DestinationNotFoundException, DestinationLoopException, FormatException, InvalidPresetConfig
+from .exceptions import BackupAbortedException, PresetExistsException, BackupHashException, BoxException, PresetNotFoundException, TargetNotFoundException, DestinationNotFoundException, DestinationLoopException, FormatException, InvalidPresetConfig
 
 from jsonschema import validate, ValidationError
 
@@ -45,6 +45,13 @@ class Preset:
     @staticmethod
     def get_preset(name: str) -> Preset:
         return _preset_container[name]
+
+    @staticmethod
+    def create_preset(name: str) -> Preset:
+        if name not in _preset_container._presets.keys():
+            Preset(name).save()
+        else:
+            raise PresetExistsException(name)
 
     def get_presets() -> list[Preset]:
         return _preset_container.presets

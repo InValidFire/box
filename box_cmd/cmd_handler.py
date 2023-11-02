@@ -142,3 +142,11 @@ class CommandHandler:
             backup.restore(location)
         else:
             raise TypeError(location)
+
+    def create_preset(self, name):
+        """Create a new blank preset and save it to file.
+        
+        Args:
+            name (str): The name given to the new preset.
+        """
+        return Preset.create_preset(name)

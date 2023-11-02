@@ -7,7 +7,7 @@ import pytest
 from box_cmd.preset import Preset
 from box_cmd.destination import Destination
 from box_cmd.backup import Backup
-from box_cmd.exceptions.exceptions import PresetNotFoundException, BackupHashException, BoxException, DestinationLoopException
+from box_cmd.exceptions.exceptions import PresetNotFoundException, PresetExistsException, BackupHashException, BoxException, DestinationLoopException
 from box_cmd.progress_info import ProgressInfo
 
 
@@ -18,6 +18,16 @@ class TestPreset:
         assert len(presets) > 0
         for item in presets:
             assert isinstance(item, Preset), "an item is not a Preset"
+
+    def test_create_preset(self, preset_json):
+        Preset.load_file(preset_json)
+        Preset.create_preset("testCreate")
+        assert Preset.get_preset("testCreate")
+
+    def test_create_preset_exists(self, preset_json):
+        Preset.load_file(preset_json)
+        with pytest.raises(PresetExistsException):
+            Preset.create_preset("testFolder")
 
     def test_get_preset(self, preset_json):
         Preset.load_file(preset_json)

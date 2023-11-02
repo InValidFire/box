@@ -44,6 +44,10 @@ class InvalidPresetConfig(PresetException):
     pass
 
 
+class PresetExistsException(PresetException):
+    pass
+
+
 class FormatException(BackupException):
     pass
 
