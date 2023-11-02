@@ -2,6 +2,7 @@ import os
 import platform
 
 from pathlib import Path
+from functools import wraps
 
 from . import CommandHandler, ProgressInfo, Backup
 from .exceptions import (
@@ -21,6 +22,28 @@ from tqdm import tqdm
 
 __version__ = "2.0.2"
 
+def preset_exceptions(f):
+    @wraps(f)
+    def decorator(*args, **kwargs):
+        try:
+            f(*args, **kwargs)
+        except FileNotFoundError:
+            print(f"Uh-Oh! Your config file appears to be missing: '{args[0]['config']}'")
+        except ValueError:
+            print(
+                f"The path exists, it doesn't seem to be a .json file though: '{args[0]['config']}'"
+            )
+        except PermissionError:
+            if platform.system() == "Windows":
+                print("It appears you may not have permission to access this location, or that the given location is not a file.")
+            else:
+                print("It appears you do not have permission to access this location.")
+        except (IsADirectoryError):
+            print(
+                f"The path exists, but this looks like a directory. Please ensure the path is correct: {args[0]['config']}"
+            )
+    return decorator
+
 @click.group()
 @click.version_option(__version__)
 @click.option("--config", "-c", default=Path.home().joinpath(".box_presets.json"))
@@ -30,39 +53,29 @@ def cli(ctx: click.Context, config):
     ctx.obj["config"] = config
     pass
 
-
-@cli.command(help="List all presets found in the preset config.")
+@cli.group()
 @click.pass_obj
 def presets(obj):
+    pass
+
+
+@presets.command(name="list", help="List all presets found in the preset config.")
+@click.pass_obj
+@preset_exceptions
+def _list(obj):
     """List all presets found in the preset config.
 
     Args:
         obj (dict): Click's context object.
     """
-    try:
-        handler = CommandHandler(obj["config"])
-        print(f"Loading presets from {obj['config']}\n\nPresets:")
-        for preset in handler.list_presets():
-            try:
-                print("-" * os.get_terminal_size().columns)
-            except OSError:
-                print("-" * 10)
-            print(preset)
-    except FileNotFoundError:
-        print(f"Uh-Oh! Your config file appears to be missing: '{obj['config']}'")
-    except ValueError:
-        print(
-            f"The path exists, it doesn't seem to be a .json file though: '{obj['config']}'"
-        )
-    except PermissionError:
-        if platform.system() == "Windows":
-            print("It appears you may not have permission to access this location, or that the given location is not a file.")
-        else:
-            print("It appears you do not have permission to access this location.")
-    except (IsADirectoryError):
-        print(
-            f"The path exists, but this looks like a directory. Please ensure the path is correct: {obj['config']}"
-        )
+    handler = CommandHandler(obj["config"])
+    print(f"Loading presets from {obj['config']}\n\nPresets:")
+    for preset in handler.list_presets():
+        try:
+            print("-" * os.get_terminal_size().columns)
+        except OSError:
+            print("-" * 10)
+        print(preset)
 
 @cli.command(help="Create a backup of a preset.")
 @click.option("--force", "-f", default=False, help="Force the creation of a backup, even if a duplicate already exists.")

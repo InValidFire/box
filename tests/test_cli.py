@@ -8,7 +8,7 @@ from box_cmd.cli import cli
 class TestCLI:
     def test_presets_cmd(self, preset_json):
         runner = CliRunner()
-        result = runner.invoke(cli, "--config temp/presets.json presets".split())
+        result = runner.invoke(cli, "--config temp/presets.json presets list".split())
         assert "testFolder" in result.output
         assert "Targets:" in result.output
         assert f"- {Path('temp/folder').absolute()}" in result.output
@@ -21,12 +21,12 @@ class TestCLI:
 
     def test_presets_cmd_not_found(self):
         runner = CliRunner()
-        result = runner.invoke(cli, "--config temp/presets.json presets".split())
+        result = runner.invoke(cli, "--config temp/presets.json presets list".split())
         assert "Uh-Oh! Your config file appears to be missing:" in result.output
 
     def test_presets_cmd_not_file_is_folder(self, preset_json):
         runner = CliRunner()
-        result = runner.invoke(cli, "--config temp presets".split())
+        result = runner.invoke(cli, "--config temp presets list".split())
         assert (
             "The path exists, but this looks like a directory. Please ensure the path is correct:" in result.output 
             or 
@@ -36,5 +36,5 @@ class TestCLI:
 
     def test_presets_cmd_not_file(self, preset_json):
         runner = CliRunner()
-        result = runner.invoke(cli, "--config temp/folder/sub_folder/file.txt presets")
+        result = runner.invoke(cli, "--config temp/folder/sub_folder/file.txt presets list")
         assert "The path exists, it doesn't seem to be a .json file though:" in result.output
