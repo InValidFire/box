@@ -59,6 +59,16 @@ def presets(obj):
     pass
 
 
+@presets.command(help="Create a new preset in the config file.")
+@click.argument("name")
+@click.pass_obj
+@preset_exceptions
+def create(obj, name: str):
+    handler = CommandHandler(obj["config"])
+    preset = handler.create_preset(name)
+    print(f"'{preset.name}' has been successfully created.")
+
+
 @presets.command(name="list", help="List all presets found in the preset config.")
 @click.pass_obj
 @preset_exceptions
